@@ -202,7 +202,7 @@ export const analyzeResume = async (
           content: prompt,
         },
       ],
-      temperature: 0.0,
+      temperature: 0.1,
     }),
   });
 
