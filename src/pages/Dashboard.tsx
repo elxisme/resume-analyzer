@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { analyzeResume, AnalysisResult } from '../lib/openai';
@@ -6,19 +6,87 @@ import { extractTextFromFile, generateSHA256Hash } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
 
+const STORAGE_KEY = 'zolla_dashboard_state';
+
+interface DashboardState {
+  currentStep: number;
+  resumeText: string;
+  jobDescription: string;
+  selectedAnalysisTypes: string[];
+  fileName: string | null;
+  analysisResult: AnalysisResult | null;
+  usedCachedResult: boolean;
+}
+
 const Dashboard: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [resumeText, setResumeText] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [selectedAnalysisTypes, setSelectedAnalysisTypes] = useState<string[]>(['job_match_analysis']);
+  // Initialize state with default values
+  const getInitialState = (): DashboardState => ({
+    currentStep: 1,
+    resumeText: '',
+    jobDescription: '',
+    selectedAnalysisTypes: ['job_match_analysis'],
+    fileName: null,
+    analysisResult: null,
+    usedCachedResult: false,
+  });
+
+  // Load state from sessionStorage
+  const loadState = (): DashboardState => {
+    try {
+      const savedState = sessionStorage.getItem(STORAGE_KEY);
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        // Validate that the parsed state has the expected structure
+        if (parsedState && typeof parsedState === 'object') {
+          return {
+            ...getInitialState(),
+            ...parsedState,
+          };
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load dashboard state from sessionStorage:', error);
+    }
+    return getInitialState();
+  };
+
+  const [dashboardState, setDashboardState] = useState<DashboardState>(loadState);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [usedCachedResult, setUsedCachedResult] = useState(false);
+  
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dashboardState));
+    } catch (error) {
+      console.warn('Failed to save dashboard state to sessionStorage:', error);
+    }
+  }, [dashboardState]);
+
+  // Helper function to update dashboard state
+  const updateState = (updates: Partial<DashboardState>) => {
+    setDashboardState(prev => ({ ...prev, ...updates }));
+  };
+
+  // Reset analysis and clear stored state
+  const handleResetAnalysis = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn('Failed to clear dashboard state from sessionStorage:', error);
+    }
+    setDashboardState(getInitialState());
+    setError(null);
+    // Reset the file input
+    const fileInput = document.getElementById('resume-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
 
   const analysisOptions = [
     {
@@ -66,11 +134,11 @@ const Dashboard: React.FC = () => {
   ];
 
   const handleAnalysisTypeChange = (analysisType: string) => {
-    setSelectedAnalysisTypes(prev => 
-      prev.includes(analysisType)
-        ? prev.filter(type => type !== analysisType)
-        : [...prev, analysisType]
-    );
+    updateState({
+      selectedAnalysisTypes: dashboardState.selectedAnalysisTypes.includes(analysisType)
+        ? dashboardState.selectedAnalysisTypes.filter(type => type !== analysisType)
+        : [...dashboardState.selectedAnalysisTypes, analysisType]
+    });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,22 +147,21 @@ const Dashboard: React.FC = () => {
 
     setIsUploading(true);
     setError(null);
-    setFileName(file.name);
+    updateState({ fileName: file.name });
 
     try {
       const extractedText = await extractTextFromFile(file);
-      setResumeText(extractedText);
+      updateState({ resumeText: extractedText });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process file');
-      setFileName(null);
+      updateState({ fileName: null });
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleRemoveFile = () => {
-    setFileName(null);
-    setResumeText('');
+    updateState({ fileName: null, resumeText: '' });
     setError(null);
     // Reset the file input
     const fileInput = document.getElementById('resume-upload') as HTMLInputElement;
@@ -104,14 +171,14 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAnalyze = async () => {
-    if (!resumeText.trim()) {
+    if (!dashboardState.resumeText.trim()) {
       setError('Please provide your resume text.');
       return;
     }
 
     // Check if job description is required
-    const needsJobDescription = selectedAnalysisTypes.includes('job_match_analysis');
-    if (needsJobDescription && !jobDescription.trim()) {
+    const needsJobDescription = dashboardState.selectedAnalysisTypes.includes('job_match_analysis');
+    if (needsJobDescription && !dashboardState.jobDescription.trim()) {
       setError('Please provide the job description for job match analysis.');
       return;
     }
@@ -123,7 +190,7 @@ const Dashboard: React.FC = () => {
 
     setIsAnalyzing(true);
     setError(null);
-    setUsedCachedResult(false);
+    updateState({ usedCachedResult: false });
 
     try {
       // Generate hashes for deduplication (only if job description is provided)
@@ -131,8 +198,8 @@ const Dashboard: React.FC = () => {
       let jobDescriptionHash = '';
       
       if (needsJobDescription) {
-        resumeHash = await generateSHA256Hash(resumeText);
-        jobDescriptionHash = await generateSHA256Hash(jobDescription);
+        resumeHash = await generateSHA256Hash(dashboardState.resumeText);
+        jobDescriptionHash = await generateSHA256Hash(dashboardState.jobDescription);
 
         // Check for existing analysis with same content hashes
         const { data: existingAnalysis, error: queryError } = await supabase
@@ -156,26 +223,28 @@ const Dashboard: React.FC = () => {
             gaps_and_suggestions: existingAnalysis.experience_gaps
           };
 
-          setAnalysisResult(cachedResult);
-          setUsedCachedResult(true);
-          setCurrentStep(4);
+          updateState({ 
+            analysisResult: cachedResult, 
+            usedCachedResult: true, 
+            currentStep: 4 
+          });
           setIsAnalyzing(false);
           return;
         }
       }
 
       // Filter analysis types to only include non-premium ones for the API call
-      const allowedAnalysisTypes = selectedAnalysisTypes.filter(type => 
+      const allowedAnalysisTypes = dashboardState.selectedAnalysisTypes.filter(type => 
         !analysisOptions.find(option => option.id === type)?.isPremium
       );
 
       // No existing analysis found, proceed with new AI analysis
       const result = await analyzeResume(
-        resumeText, 
-        needsJobDescription ? jobDescription : '', 
+        dashboardState.resumeText, 
+        needsJobDescription ? dashboardState.jobDescription : '', 
         allowedAnalysisTypes.filter(type => type !== 'job_match_analysis') // Remove job_match_analysis as it's always included
       );
-      setAnalysisResult(result);
+      updateState({ analysisResult: result });
 
       // Save the new analysis with hashes for future deduplication
       if (needsJobDescription) {
@@ -196,7 +265,7 @@ const Dashboard: React.FC = () => {
         });
       }
 
-      setCurrentStep(4);
+      updateState({ currentStep: 4 });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze resume');
     } finally {
@@ -207,9 +276,9 @@ const Dashboard: React.FC = () => {
   const handleGetTailoredResume = () => {
     navigate('/premium', { 
       state: { 
-        resumeText, 
-        jobDescription, 
-        analysisResult 
+        resumeText: dashboardState.resumeText, 
+        jobDescription: dashboardState.jobDescription, 
+        analysisResult: dashboardState.analysisResult 
       } 
     });
   };
@@ -220,10 +289,75 @@ const Dashboard: React.FC = () => {
     return match ? parseInt(match[1], 10) : 0;
   };
 
-  const isJobMatchSelected = selectedAnalysisTypes.includes('job_match_analysis');
+  // Helper function to count issues found in analysis
+  const getIssuesCount = () => {
+    if (!dashboardState.analysisResult) return { total: 0, details: [] };
+    
+    const issues = [];
+    let total = 0;
+
+    // ATS compatibility issues
+    if (dashboardState.analysisResult.ats_compatibility?.issues?.length) {
+      const count = dashboardState.analysisResult.ats_compatibility.issues.length;
+      issues.push(`${count} ATS compatibility problem${count > 1 ? 's' : ''}`);
+      total += count;
+    }
+
+    // Missing keywords
+    if (dashboardState.analysisResult.job_keywords_detected) {
+      const missingCount = dashboardState.analysisResult.job_keywords_detected.filter(
+        item => item.status === 'Missing'
+      ).length;
+      if (missingCount > 0) {
+        issues.push(`${missingCount} missing keyword${missingCount > 1 ? 's' : ''}`);
+        total += missingCount;
+      }
+    }
+
+    // Weak impact statements
+    if (dashboardState.analysisResult.impact_statement_review?.weak_statements?.length) {
+      const count = dashboardState.analysisResult.impact_statement_review.weak_statements.length;
+      issues.push(`${count} weak impact statement${count > 1 ? 's' : ''}`);
+      total += count;
+    }
+
+    // Skills gaps
+    if (dashboardState.analysisResult.skills_gap_assessment?.missing_skills?.length) {
+      const count = dashboardState.analysisResult.skills_gap_assessment.missing_skills.length;
+      issues.push(`${count} skill gap${count > 1 ? 's' : ''}`);
+      total += count;
+    }
+
+    // Format issues
+    if (dashboardState.analysisResult.format_optimization?.issues?.length) {
+      const count = dashboardState.analysisResult.format_optimization.issues.length;
+      issues.push(`${count} format issue${count > 1 ? 's' : ''}`);
+      total += count;
+    }
+
+    // Career story issues
+    if (dashboardState.analysisResult.career_story_flow?.issues?.length) {
+      const count = dashboardState.analysisResult.career_story_flow.issues.length;
+      issues.push(`${count} career story issue${count > 1 ? 's' : ''}`);
+      total += count;
+    }
+
+    // General gaps and suggestions
+    if (dashboardState.analysisResult.gaps_and_suggestions?.length) {
+      const count = dashboardState.analysisResult.gaps_and_suggestions.length;
+      if (total === 0) { // Only count these if no specific issues were found
+        issues.push(`${count} improvement area${count > 1 ? 's' : ''}`);
+        total += count;
+      }
+    }
+
+    return { total, details: issues };
+  };
+
+  const isJobMatchSelected = dashboardState.selectedAnalysisTypes.includes('job_match_analysis');
 
   const renderStep = () => {
-    switch (currentStep) {
+    switch (dashboardState.currentStep) {
       case 1:
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -236,7 +370,7 @@ const Dashboard: React.FC = () => {
             <div className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
               isUploading 
                 ? 'border-blue-400 bg-blue-50' 
-                : fileName 
+                : dashboardState.fileName 
                   ? 'border-green-400 bg-green-50' 
                   : 'border-gray-300 hover:border-blue-400'
             }`}>
@@ -244,15 +378,15 @@ const Dashboard: React.FC = () => {
                 <div className="flex flex-col items-center space-y-3">
                   <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 animate-spin" />
                   <span className="text-blue-600 font-medium text-sm sm:text-base">Processing file...</span>
-                  <span className="text-xs sm:text-sm text-gray-500">Extracting text from {fileName}</span>
+                  <span className="text-xs sm:text-sm text-gray-500">Extracting text from {dashboardState.fileName}</span>
                 </div>
-              ) : fileName ? (
+              ) : dashboardState.fileName ? (
                 <div className="flex flex-col items-center space-y-3">
                   <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                   <span className="text-green-600 font-medium text-sm sm:text-base">File uploaded successfully!</span>
                   <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border max-w-full">
                     <FileText className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-gray-700 truncate">{fileName}</span>
+                    <span className="text-xs sm:text-sm text-gray-700 truncate">{dashboardState.fileName}</span>
                     <button
                       onClick={handleRemoveFile}
                       className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
@@ -292,8 +426,8 @@ const Dashboard: React.FC = () => {
               </label>
               <textarea
                 id="resume-text"
-                value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
+                value={dashboardState.resumeText}
+                onChange={(e) => updateState({ resumeText: e.target.value })}
                 rows={8}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 placeholder="Paste your resume text here..."
@@ -301,8 +435,8 @@ const Dashboard: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setCurrentStep(2)}
-              disabled={!resumeText.trim() || isUploading}
+              onClick={() => updateState({ currentStep: 2 })}
+              disabled={!dashboardState.resumeText.trim() || isUploading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
             >
               {isUploading ? 'Processing...' : 'Next: Select Analysis Types'}
@@ -329,13 +463,13 @@ const Dashboard: React.FC = () => {
                 {analysisOptions.map((option) => (
                   <div key={option.id} className="relative">
                     <label className={`flex items-start space-x-3 p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${
-                      selectedAnalysisTypes.includes(option.id)
+                      dashboardState.selectedAnalysisTypes.includes(option.id)
                         ? 'border-purple-300 bg-purple-50'
                         : 'border-gray-200 hover:border-purple-200 hover:bg-purple-25'
                     } ${option.isPremium ? 'opacity-75' : ''}`}>
                       <input
                         type="checkbox"
-                        checked={selectedAnalysisTypes.includes(option.id)}
+                        checked={dashboardState.selectedAnalysisTypes.includes(option.id)}
                         onChange={() => handleAnalysisTypeChange(option.id)}
                         disabled={option.isPremium}
                         className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded disabled:opacity-50"
@@ -387,13 +521,13 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="text-gray-700">
-                    Resume: {fileName ? fileName : `${resumeText.length} characters`}
+                    Resume: {dashboardState.fileName ? dashboardState.fileName : `${dashboardState.resumeText.length} characters`}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="text-gray-700">
-                    Analysis Types: {selectedAnalysisTypes.length} selected
+                    Analysis Types: {dashboardState.selectedAnalysisTypes.length} selected
                   </span>
                 </div>
                 {isJobMatchSelected && (
@@ -409,7 +543,7 @@ const Dashboard: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={() => setCurrentStep(1)}
+                onClick={() => updateState({ currentStep: 1 })}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm sm:text-base"
               >
                 Back
@@ -417,12 +551,12 @@ const Dashboard: React.FC = () => {
               <button
                 onClick={() => {
                   if (isJobMatchSelected) {
-                    setCurrentStep(3);
+                    updateState({ currentStep: 3 });
                   } else {
                     handleAnalyze();
                   }
                 }}
-                disabled={selectedAnalysisTypes.length === 0}
+                disabled={dashboardState.selectedAnalysisTypes.length === 0}
                 className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {isJobMatchSelected ? (
@@ -456,8 +590,8 @@ const Dashboard: React.FC = () => {
               </label>
               <textarea
                 id="job-description"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
+                value={dashboardState.jobDescription}
+                onChange={(e) => updateState({ jobDescription: e.target.value })}
                 rows={10}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 placeholder="Paste the job description here..."
@@ -466,14 +600,14 @@ const Dashboard: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={() => setCurrentStep(2)}
+                onClick={() => updateState({ currentStep: 2 })}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm sm:text-base"
               >
                 Back
               </button>
               <button
                 onClick={handleAnalyze}
-                disabled={!jobDescription.trim() || isAnalyzing}
+                disabled={!dashboardState.jobDescription.trim() || isAnalyzing}
                 className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
               >
                 {isAnalyzing ? (
@@ -493,12 +627,14 @@ const Dashboard: React.FC = () => {
         );
 
       case 4:
+        const issuesCount = getIssuesCount();
+        
         return (
           <div className="space-y-4 sm:space-y-6">
             <div className="text-center">
               <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Analysis Complete!</h3>
               <p className="text-sm sm:text-base text-gray-600">Here's your resume analysis results</p>
-              {usedCachedResult && (
+              {dashboardState.usedCachedResult && (
                 <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Retrieved from previous analysis
@@ -506,10 +642,10 @@ const Dashboard: React.FC = () => {
               )}
             </div>
 
-            {analysisResult && (
+            {dashboardState.analysisResult && (
               <div className="space-y-4 sm:space-y-6">
                 {/* Overall Analysis Score - only show if job match analysis was performed */}
-                {isJobMatchSelected && analysisResult.match_score && (
+                {isJobMatchSelected && dashboardState.analysisResult.match_score && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                       Overall Analysis Score
@@ -519,34 +655,34 @@ const Dashboard: React.FC = () => {
                         <div className="w-full bg-gray-200 rounded-full h-3 sm:h-4">
                           <div 
                             className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 sm:h-4 rounded-full transition-all duration-500"
-                            style={{ width: `${getNumericScore(analysisResult.match_score)}%` }}
+                            style={{ width: `${getNumericScore(dashboardState.analysisResult.match_score)}%` }}
                           ></div>
                         </div>
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-gray-900">
-                        {analysisResult.match_score}
+                        {dashboardState.analysisResult.match_score}
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Match Summary - only show if job match analysis was performed */}
-                {isJobMatchSelected && analysisResult.match_summary && (
+                {isJobMatchSelected && dashboardState.analysisResult.match_summary && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2" />
                       Job Match Analysis
                     </h4>
-                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{analysisResult.match_summary}</p>
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{dashboardState.analysisResult.match_summary}</p>
                   </div>
                 )}
 
                 {/* Job Keywords Detected - only show if job match analysis was performed */}
-                {isJobMatchSelected && analysisResult.job_keywords_detected && (
+                {isJobMatchSelected && dashboardState.analysisResult.job_keywords_detected && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Job Keywords Detected</h4>
                     <div className="grid grid-cols-1 gap-2 sm:gap-3">
-                      {analysisResult.job_keywords_detected.map((item, index) => (
+                      {dashboardState.analysisResult.job_keywords_detected.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100">
                           <span className="text-sm sm:text-base text-gray-700 font-medium truncate mr-2">{item.keyword}</span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
@@ -563,11 +699,11 @@ const Dashboard: React.FC = () => {
                 )}
 
                 {/* Gaps and Suggestions - only show if job match analysis was performed */}
-                {isJobMatchSelected && analysisResult.gaps_and_suggestions && (
+                {isJobMatchSelected && dashboardState.analysisResult.gaps_and_suggestions && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Gaps and Suggestions</h4>
                     <ul className="space-y-2 sm:space-y-3">
-                      {analysisResult.gaps_and_suggestions.map((suggestion, index) => (
+                      {dashboardState.analysisResult.gaps_and_suggestions.map((suggestion, index) => (
                         <li key={index} className="flex items-start space-x-2 sm:space-x-3">
                           <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                           <span className="text-sm sm:text-base text-gray-700">{suggestion}</span>
@@ -578,21 +714,21 @@ const Dashboard: React.FC = () => {
                 )}
 
                 {/* Additional Analysis Results */}
-                {analysisResult.ats_compatibility && (
+                {dashboardState.analysisResult.ats_compatibility && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
-                      ATS Compatibility ({analysisResult.ats_compatibility.score}/10)
-                      {analysisResult.ats_compatibility.score < 7 && (
+                      ATS Compatibility ({dashboardState.analysisResult.ats_compatibility.score}/10)
+                      {dashboardState.analysisResult.ats_compatibility.score < 7 && (
                         <span className="ml-2 text-orange-600">⚠️ Issues Found</span>
                       )}
                     </h4>
-                    <p className="text-sm sm:text-base text-gray-700 mb-3">{analysisResult.ats_compatibility.summary}</p>
-                    {analysisResult.ats_compatibility.issues.length > 0 && (
+                    <p className="text-sm sm:text-base text-gray-700 mb-3">{dashboardState.analysisResult.ats_compatibility.summary}</p>
+                    {dashboardState.analysisResult.ats_compatibility.issues.length > 0 && (
                       <div className="space-y-2">
                         <h5 className="font-medium text-gray-900 text-sm">Issues Found:</h5>
                         <ul className="space-y-1">
-                          {analysisResult.ats_compatibility.issues.map((issue, index) => (
+                          {dashboardState.analysisResult.ats_compatibility.issues.map((issue, index) => (
                             <li key={index} className="flex items-start space-x-2">
                               <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                               <span className="text-sm text-gray-700">{issue}</span>
@@ -604,21 +740,21 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {analysisResult.impact_statement_review && (
+                {dashboardState.analysisResult.impact_statement_review && (
                   <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
                       <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2" />
-                      Impact Statement Review ({analysisResult.impact_statement_review.score}/10)
-                      {analysisResult.impact_statement_review.score < 7 && (
+                      Impact Statement Review ({dashboardState.analysisResult.impact_statement_review.score}/10)
+                      {dashboardState.analysisResult.impact_statement_review.score < 7 && (
                         <span className="ml-2 text-orange-600">🎯 Needs improvement</span>
                       )}
                     </h4>
-                    <p className="text-sm sm:text-base text-gray-700 mb-3">{analysisResult.impact_statement_review.summary}</p>
-                    {analysisResult.impact_statement_review.weak_statements.length > 0 && (
+                    <p className="text-sm sm:text-base text-gray-700 mb-3">{dashboardState.analysisResult.impact_statement_review.summary}</p>
+                    {dashboardState.analysisResult.impact_statement_review.weak_statements.length > 0 && (
                       <div className="space-y-2">
                         <h5 className="font-medium text-gray-900 text-sm">Weak Statements:</h5>
                         <ul className="space-y-1">
-                          {analysisResult.impact_statement_review.weak_statements.map((statement, index) => (
+                          {dashboardState.analysisResult.impact_statement_review.weak_statements.map((statement, index) => (
                             <li key={index} className="flex items-start space-x-2">
                               <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
                               <span className="text-sm text-gray-700">{statement}</span>
@@ -630,14 +766,14 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Premium Upgrade Prompt - only show if job match analysis was performed */}
-                {isJobMatchSelected && (selectedAnalysisTypes.some(type => ['skills_gap_assessment', 'format_optimization', 'career_story_flow'].includes(type))) && (
+                {/* Premium Value Proposition - Show for ALL analyses */}
+                {dashboardState.analysisResult && issuesCount.total > 0 && (
                   <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4 sm:p-6">
                     <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 flex items-center">
                       🎯 Ready to Fix These Issues?
                     </h4>
                     <p className="text-sm sm:text-base text-gray-700 mb-4">
-                      Your analysis revealed several areas for improvement. Get an enhanced resume that addresses ALL these issues:
+                      Your analysis revealed {issuesCount.details.join(', ')}. Get an enhanced resume that addresses ALL these issues:
                     </p>
                     <ul className="space-y-2 mb-4">
                       <li className="flex items-center space-x-2 text-sm">
@@ -660,11 +796,18 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* CTA - only show if job match analysis was performed */}
-                {isJobMatchSelected && (
+                {/* CTA - Show for ALL analyses */}
+                {dashboardState.analysisResult && (
                   <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4 sm:p-6 text-white">
-                    <h4 className="text-lg sm:text-xl font-semibold mb-2">Want a Tailored Resume & Cover Letter?</h4>
-                    <p className="mb-3 sm:mb-4 text-sm sm:text-base">Get a professionally optimized resume and compelling cover letter that matches this job description perfectly.</p>
+                    <h4 className="text-lg sm:text-xl font-semibold mb-2">
+                      {isJobMatchSelected ? 'Want a Tailored Resume & Cover Letter?' : 'Ready to Enhance Your Resume?'}
+                    </h4>
+                    <p className="mb-3 sm:mb-4 text-sm sm:text-base">
+                      {isJobMatchSelected 
+                        ? 'Get a professionally optimized resume and compelling cover letter that matches this job description perfectly.'
+                        : 'Get a professionally optimized resume and compelling cover letter that addresses all identified issues and enhances your job prospects.'
+                      }
+                    </p>
                     <button
                       onClick={handleGetTailoredResume}
                       className="bg-white text-blue-600 py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center space-x-2 text-sm sm:text-base"
@@ -675,29 +818,19 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Analysis Complete Message for non-job-match analyses */}
-                {!isJobMatchSelected && (
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 sm:p-6 text-center">
-                    <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Analysis Complete!</h4>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4">
-                      Your resume analysis is complete. The selected analysis types have been processed.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setCurrentStep(1);
-                        setResumeText('');
-                        setJobDescription('');
-                        setSelectedAnalysisTypes(['job_match_analysis']);
-                        setAnalysisResult(null);
-                        setError(null);
-                        setFileName(null);
-                      }}
-                      className="bg-blue-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
-                    >
-                      Analyze Another Resume
-                    </button>
-                  </div>
-                )}
+                {/* Analysis Complete Message */}
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 sm:p-6 text-center">
+                  <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Analysis Complete!</h4>
+                  <p className="text-sm sm:text-base text-gray-600 mb-4">
+                    Your resume analysis is complete. Ready to analyze another resume or enhance this one?
+                  </p>
+                  <button
+                    onClick={handleResetAnalysis}
+                    className="bg-blue-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                  >
+                    Analyze Another Resume
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -721,7 +854,7 @@ const Dashboard: React.FC = () => {
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center">
               <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm ${
-                step <= currentStep 
+                step <= dashboardState.currentStep 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-200 text-gray-600'
               }`}>
@@ -729,7 +862,7 @@ const Dashboard: React.FC = () => {
               </div>
               {step < 4 && (
                 <div className={`w-8 sm:w-16 h-1 mx-1 sm:mx-2 ${
-                  step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                  step < dashboardState.currentStep ? 'bg-blue-600' : 'bg-gray-200'
                 }`} />
               )}
             </div>
