@@ -47,11 +47,14 @@ const Premium: React.FC = () => {
         3500,
         async (reference) => {
           try {
-            // Generate tailored resume and cover letter
-            const [tailoredResult, coverLetterResult] = await Promise.all([
-              generateTailoredResume(resumeText, jobDescription),
-              generateCoverLetter(resumeText, jobDescription)
-            ]);
+            // Generate tailored resume
+            const tailoredResult = await generateTailoredResume(resumeText, jobDescription || '');
+            
+            // Only generate cover letter if job description is available
+            let coverLetterResult = null;
+            if (jobDescription && jobDescription.trim()) {
+              coverLetterResult = await generateCoverLetter(resumeText, jobDescription);
+            }
             
             // Save to database with mapped fields (no premium status update)
             await supabase.from('resume_analyses').insert({
@@ -61,7 +64,7 @@ const Premium: React.FC = () => {
               experience_gaps: analysisResult?.gaps_and_suggestions || [],
               skill_gaps: [], // Empty array as new format combines all gaps
               tailored_resume: tailoredResult.tailored_resume,
-              cover_letter: coverLetterResult.cover_letter,
+              cover_letter: coverLetterResult?.cover_letter || null,
             });
 
             // Note: Removed the is_premium update - users pay per resume generation
@@ -70,13 +73,13 @@ const Premium: React.FC = () => {
               state: { 
                 tailoredResume: tailoredResult.tailored_resume,
                 improvements: tailoredResult.improvements,
-                coverLetter: coverLetterResult.cover_letter,
-                coverLetterKeyPoints: coverLetterResult.key_points,
+                coverLetter: coverLetterResult?.cover_letter || null,
+                coverLetterKeyPoints: coverLetterResult?.key_points || null,
                 reference 
               } 
             });
           } catch (err) {
-            setError('Payment successful but failed to generate tailored resume and cover letter. Please contact support.');
+            setError('Payment successful but failed to generate tailored resume' + (jobDescription ? ' and cover letter' : '') + '. Please contact support.');
           }
         },
         () => {
@@ -114,12 +117,14 @@ const Premium: React.FC = () => {
                   <strong>Tailored Resume:</strong> AI-optimized resume specifically for this job
                 </span>
               </li>
-              <li className="flex items-start space-x-2 sm:space-x-3">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Professional Cover Letter:</strong> Compelling cover letter that highlights your fit
-                </span>
-              </li>
+              {jobDescription && jobDescription.trim() && (
+                <li className="flex items-start space-x-2 sm:space-x-3">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base text-gray-700">
+                    <strong>Professional Cover Letter:</strong> Compelling cover letter that highlights your fit
+                  </span>
+                </li>
+              )}
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
@@ -129,7 +134,7 @@ const Premium: React.FC = () => {
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Content Restructuring:</strong> Reorder and enhance sections for maximum impact
+                  <strong>Content Enhancement:</strong> Reorder and enhance sections for maximum impact
                 </span>
               </li>
               <li className="flex items-start space-x-2 sm:space-x-3">
@@ -141,7 +146,7 @@ const Premium: React.FC = () => {
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
-                  <strong>Improvement Summary:</strong> See all the changes and enhancements made
+                  <strong>Improvement Summary:</strong> See all the changes and enhancements made{jobDescription && jobDescription.trim() ? ' to both documents' : ' to your resume'}
                 </span>
               </li>
             </ul>
@@ -183,7 +188,9 @@ const Premium: React.FC = () => {
               <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                 {formatCurrency(3500)}
               </div>
-              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Per tailored resume & cover letter package</p>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+                Per tailored resume{jobDescription && jobDescription.trim() ? ' & cover letter' : ''} package
+              </p>
               
               <div className="space-y-3 sm:space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 sm:p-4">
@@ -194,13 +201,13 @@ const Premium: React.FC = () => {
                 
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 sm:p-4">
                   <p className="text-xs sm:text-sm text-gray-700">
-                    <strong>Instant Access:</strong> Get your documents immediately after payment
+                    <strong>Instant Access:</strong> Get your {jobDescription && jobDescription.trim() ? 'documents' : 'resume'} immediately after payment
                   </p>
                 </div>
 
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-3 sm:p-4">
                   <p className="text-xs sm:text-sm text-gray-700">
-                    <strong>Complete Package:</strong> Resume + Cover Letter + Improvements
+                    <strong>Complete Package:</strong> Resume{jobDescription && jobDescription.trim() ? ' + Cover Letter' : ''} + Improvements
                   </p>
                 </div>
               </div>
@@ -232,7 +239,7 @@ const Premium: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Pay {formatCurrency(3500)} Now</span>
+                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim() ? ' & Cover Letter' : ''} - {formatCurrency(3500)}</span>
                 </>
               )}
             </button>
