@@ -459,7 +459,7 @@ export const generateCoverLetter = async (
   }
 
   const prompt = `
-    Please create a professional cover letter based on the resume and job description:
+    Please create a professional cover letter based on the resume and job description. Vary your opening sentence:
 
     RESUME:
     ${resumeText}
@@ -476,10 +476,11 @@ export const generateCoverLetter = async (
 
     The cover letter should:
     - Be professional and engaging
+    - Not always start with the same sentence
     - Highlight relevant experience from the resume
     - Address specific requirements from the job description
     - Show enthusiasm for the role and company
-    - Be concise but compelling (3-4 paragraphs)
+    - Be concise but compelling (3-4 short paragraphs)
     - Include proper salutation and closing
     - Use keywords from the job description naturally
     - Address any skill gaps by showing willingness to learn
