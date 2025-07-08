@@ -1,0 +1,250 @@
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { processPayment } from '../lib/paystack';
+import { generateTailoredResume, generateCoverLetter } from '../lib/openai';
+import { supabase } from '../lib/supabase';
+import { formatCurrency } from '../lib/utils';
+import { CreditCard, CheckCircle, AlertCircle, Star, TrendingUp } from 'lucide-react';
+
+const Premium: React.FC = () => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user, refreshUserProfile } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { resumeText, jobDescription, analysisResult } = location.state || {};
+
+  if (!resumeText || !jobDescription) {
+    navigate('/dashboard');
+    return null;
+  }
+
+  // Helper function to extract numeric score from match_score string
+  const getNumericScore = (matchScore: string): number => {
+    const match = matchScore.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  // Helper function to extract present keywords
+  const getPresentKeywords = (): string[] => {
+    if (!analysisResult?.job_keywords_detected) return [];
+    return analysisResult.job_keywords_detected
+      .filter((item: any) => item.status === 'Present')
+      .map((item: any) => item.keyword);
+  };
+
+  const handlePayment = async () => {
+    if (!user) return;
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      await processPayment(
+        user.email!,
+        3500,
+        async (reference) => {
+          try {
+            // Generate tailored resume and cover letter
+            const [tailoredResult, coverLetterResult] = await Promise.all([
+              generateTailoredResume(resumeText, jobDescription),
+              generateCoverLetter(resumeText, jobDescription)
+            ]);
+            
+            // Save to database with mapped fields (no premium status update)
+            await supabase.from('resume_analyses').insert({
+              user_id: user.id,
+              compatibility_score: getNumericScore(analysisResult?.match_score || '0/100'),
+              keyword_matches: getPresentKeywords(),
+              experience_gaps: analysisResult?.gaps_and_suggestions || [],
+              skill_gaps: [], // Empty array as new format combines all gaps
+              tailored_resume: tailoredResult.tailored_resume,
+              cover_letter: coverLetterResult.cover_letter,
+            });
+
+            // Note: Removed the is_premium update - users pay per resume generation
+            
+            navigate('/success', { 
+              state: { 
+                tailoredResume: tailoredResult.tailored_resume,
+                improvements: tailoredResult.improvements,
+                coverLetter: coverLetterResult.cover_letter,
+                coverLetterKeyPoints: coverLetterResult.key_points,
+                reference 
+              } 
+            });
+          } catch (err) {
+            setError('Payment successful but failed to generate tailored resume and cover letter. Please contact support.');
+          }
+        },
+        () => {
+          setError('Payment was cancelled');
+          setIsProcessing(false);
+        }
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment failed');
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Get Your Tailored Resume & Cover Letter</h1>
+        <p className="text-sm sm:text-base text-gray-600">
+          Unlock a professionally optimized resume and cover letter tailored to your job description
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* Left Column - What You Get */}
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 mr-2" />
+              What You'll Get
+            </h3>
+            <ul className="space-y-2 sm:space-y-3">
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Tailored Resume:</strong> AI-optimized resume specifically for this job
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Professional Cover Letter:</strong> Compelling cover letter that highlights your fit
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Keyword Optimization:</strong> Include all relevant keywords from the job description
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Content Restructuring:</strong> Reorder and enhance sections for maximum impact
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Instant Download:</strong> Download both documents immediately
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Improvement Summary:</strong> See all the changes and enhancements made
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {analysisResult && (
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
+                Your Current Score
+              </h3>
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                <div className="flex-1">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
+                    <div 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 h-2.5 sm:h-3 rounded-full"
+                      style={{ width: `${getNumericScore(analysisResult.match_score)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {analysisResult.match_score}
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Zolla AI will optimize your resume and create a compelling cover letter to achieve a higher compatibility score
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Payment */}
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
+              Pricing
+            </h3>
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                {formatCurrency(3500)}
+              </div>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Per tailored resume & cover letter package</p>
+              
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    <strong>Secure Payment:</strong> Powered by Paystack
+                  </p>
+                </div>
+                
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    <strong>Instant Access:</strong> Get your documents immediately after payment
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    <strong>Complete Package:</strong> Resume + Cover Letter + Improvements
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
+              <div className="flex">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0" />
+                <div className="ml-3">
+                  <p className="text-xs sm:text-sm text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <button
+              onClick={handlePayment}
+              disabled={isProcessing}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Pay {formatCurrency(3500)} Now</span>
+                </>
+              )}
+            </button>
+            
+            <p className="text-xs text-gray-500 mt-3 sm:mt-4 text-center">
+              By proceeding, you agree to our terms of service and privacy policy
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Premium;
