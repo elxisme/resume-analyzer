@@ -85,7 +85,7 @@ export const analyzeResume = async (
     1. Extract the most relevant **keywords** from the job description.
     2. Check if these keywords are present in the resume.
     3. Identify key **skills or qualifications** that are missing or weakly represented in the resume.
-    4. Provide a brief **summary** on how well the resume matches the job.
+    4. Provide a brief **summary** on how well or otherwise the resume matches the job.
     5. Give a **match score out of 100** based on relevance and completeness.
     
     ${selectedAnalysisTypes.length > 0 ? `
@@ -202,7 +202,7 @@ export const analyzeResume = async (
           content: prompt,
         },
       ],
-      temperature: 0.1,
+      temperature: 0.2,
     }),
   });
 
@@ -354,23 +354,26 @@ export const generateTailoredResume = async (
     }
 
     The tailored resume should:
-- Emphasizes relevant skills and experience
-- Incorporates job description keywords naturally and honestly
-- Restructures content to match role requirements
-- Strengthens weak statements with quantifiable results
-- Optimizes for ATS compatibility
-- Maintains a clear, coherent career narrative
-- Is completely truthful — do not fabricate anything
-
-
+- The tailored resume should:
+    - Emphasize relevant skills and experience
+    - Use keywords from the job description naturally and truthfully
+    - Restructure content to match job requirements
+    - Maintain professional formatting
+    - Address all identified issues from the analysis
+    - Strengthen weak impact statements with quantified results where possible
+    - Optimize for ATS compatibility
+    - Ensure proper section organization and visual hierarchy
+    - Create a coherent career story narrative
+    - Be honest and truthful - never add false information
+	
 **Formatting requirements**:
-- Use ALL CAPS for section headers
-- Bullet points for achievements (hyphens or asterisks)
-- Consistent indentation and spacing
-- Single-space within sections, double-space between sections
-- No columns, tables, or graphics
-- Resume must be cleanly copy-pastable into Word or Google Docs with minimal editing
-- Output in plain text only — no Markdown, no HTML
+	- Use ALL CAPS for section headers
+	- Bullet points for achievements (hyphens or asterisks)
+	- Consistent indentation and spacing
+	- Single-space within sections, double-space between sections
+	- No columns, tables, or graphics
+	- Resume must be cleanly copy-pastable into Word or Google Docs with minimal editing
+	- Output in Markdown and HTML
   `;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
