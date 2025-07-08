@@ -224,12 +224,117 @@ export const analyzeResume = async (
   }
 };
 
-export const generateTailoredResume = async (
+// Perform comprehensive analysis for premium features
+export const performComprehensiveAnalysis = async (
   resumeText: string,
   jobDescription: string
+): Promise<AnalysisResult> => {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  // Include all premium analysis types for comprehensive analysis
+  const allAnalysisTypes = [
+    'ats_compatibility',
+    'impact_statement_review',
+    'skills_gap_assessment',
+    'format_optimization',
+    'career_story_flow'
+  ];
+
+  return await analyzeResume(resumeText, jobDescription, allAnalysisTypes);
+};
+
+export const generateTailoredResume = async (
+  resumeText: string,
+  jobDescription: string,
+  analysisResult?: AnalysisResult
 ): Promise<TailoredResumeResult> => {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
+  }
+
+  // Build enhanced prompt based on analysis results
+  let enhancedInstructions = '';
+  
+  if (analysisResult) {
+    enhancedInstructions += '\n\nBased on the comprehensive analysis, please address the following specific issues:\n';
+    
+    // ATS Compatibility improvements
+    if (analysisResult.ats_compatibility) {
+      enhancedInstructions += `\nATS COMPATIBILITY (Score: ${analysisResult.ats_compatibility.score}/10):`;
+      enhancedInstructions += `\n- ${analysisResult.ats_compatibility.summary}`;
+      if (analysisResult.ats_compatibility.issues.length > 0) {
+        enhancedInstructions += `\n- Issues to fix: ${analysisResult.ats_compatibility.issues.join(', ')}`;
+      }
+      if (analysisResult.ats_compatibility.suggestions.length > 0) {
+        enhancedInstructions += `\n- Apply these suggestions: ${analysisResult.ats_compatibility.suggestions.join(', ')}`;
+      }
+    }
+
+    // Impact Statement improvements
+    if (analysisResult.impact_statement_review) {
+      enhancedInstructions += `\n\nIMPACT STATEMENTS (Score: ${analysisResult.impact_statement_review.score}/10):`;
+      enhancedInstructions += `\n- ${analysisResult.impact_statement_review.summary}`;
+      if (analysisResult.impact_statement_review.weak_statements.length > 0) {
+        enhancedInstructions += `\n- Strengthen these weak statements: ${analysisResult.impact_statement_review.weak_statements.join(', ')}`;
+      }
+      if (analysisResult.impact_statement_review.suggestions.length > 0) {
+        enhancedInstructions += `\n- Apply these improvements: ${analysisResult.impact_statement_review.suggestions.join(', ')}`;
+      }
+    }
+
+    // Skills Gap improvements
+    if (analysisResult.skills_gap_assessment) {
+      enhancedInstructions += `\n\nSKILLS GAPS (Score: ${analysisResult.skills_gap_assessment.score}/10):`;
+      enhancedInstructions += `\n- ${analysisResult.skills_gap_assessment.summary}`;
+      if (analysisResult.skills_gap_assessment.missing_skills.length > 0) {
+        enhancedInstructions += `\n- Address these missing skills: ${analysisResult.skills_gap_assessment.missing_skills.join(', ')}`;
+      }
+      if (analysisResult.skills_gap_assessment.suggestions.length > 0) {
+        enhancedInstructions += `\n- Implement these suggestions: ${analysisResult.skills_gap_assessment.suggestions.join(', ')}`;
+      }
+    }
+
+    // Format Optimization improvements
+    if (analysisResult.format_optimization) {
+      enhancedInstructions += `\n\nFORMAT OPTIMIZATION (Score: ${analysisResult.format_optimization.score}/10):`;
+      enhancedInstructions += `\n- ${analysisResult.format_optimization.summary}`;
+      if (analysisResult.format_optimization.issues.length > 0) {
+        enhancedInstructions += `\n- Fix these format issues: ${analysisResult.format_optimization.issues.join(', ')}`;
+      }
+      if (analysisResult.format_optimization.suggestions.length > 0) {
+        enhancedInstructions += `\n- Apply these format improvements: ${analysisResult.format_optimization.suggestions.join(', ')}`;
+      }
+    }
+
+    // Career Story Flow improvements
+    if (analysisResult.career_story_flow) {
+      enhancedInstructions += `\n\nCAREER STORY FLOW (Score: ${analysisResult.career_story_flow.score}/10):`;
+      enhancedInstructions += `\n- ${analysisResult.career_story_flow.summary}`;
+      if (analysisResult.career_story_flow.issues.length > 0) {
+        enhancedInstructions += `\n- Address these career story issues: ${analysisResult.career_story_flow.issues.join(', ')}`;
+      }
+      if (analysisResult.career_story_flow.suggestions.length > 0) {
+        enhancedInstructions += `\n- Implement these improvements: ${analysisResult.career_story_flow.suggestions.join(', ')}`;
+      }
+    }
+
+    // Missing keywords
+    if (analysisResult.job_keywords_detected) {
+      const missingKeywords = analysisResult.job_keywords_detected
+        .filter(item => item.status === 'Missing')
+        .map(item => item.keyword);
+      
+      if (missingKeywords.length > 0) {
+        enhancedInstructions += `\n\nMISSING KEYWORDS: Strategically incorporate these keywords where relevant and truthful: ${missingKeywords.join(', ')}`;
+      }
+    }
+
+    // General gaps and suggestions
+    if (analysisResult.gaps_and_suggestions && analysisResult.gaps_and_suggestions.length > 0) {
+      enhancedInstructions += `\n\nGENERAL IMPROVEMENTS: ${analysisResult.gaps_and_suggestions.join(', ')}`;
+    }
   }
 
   const prompt = `
@@ -240,6 +345,7 @@ export const generateTailoredResume = async (
 
     JOB DESCRIPTION:
     ${jobDescription}
+    ${enhancedInstructions}
 
     Please provide a JSON response with the following structure:
     {
@@ -249,9 +355,15 @@ export const generateTailoredResume = async (
 
     The tailored resume should:
     - Emphasize relevant skills and experience
-    - Use keywords from the job description
+    - Use keywords from the job description naturally and truthfully
     - Restructure content to match job requirements
     - Maintain professional formatting
+    - Address all identified issues from the analysis
+    - Strengthen weak impact statements with quantified results where possible
+    - Optimize for ATS compatibility
+    - Ensure proper section organization and visual hierarchy
+    - Create a coherent career story narrative
+    - Be honest and truthful - never add false information
   `;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -296,10 +408,44 @@ export const generateTailoredResume = async (
 
 export const generateCoverLetter = async (
   resumeText: string,
-  jobDescription: string
+  jobDescription: string,
+  analysisResult?: AnalysisResult
 ): Promise<CoverLetterResult> => {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
+  }
+
+  // Build enhanced instructions based on analysis results
+  let enhancedInstructions = '';
+  
+  if (analysisResult) {
+    enhancedInstructions += '\n\nBased on the comprehensive analysis, please ensure the cover letter addresses:\n';
+    
+    // Highlight strengths and address gaps
+    if (analysisResult.job_keywords_detected) {
+      const presentKeywords = analysisResult.job_keywords_detected
+        .filter(item => item.status === 'Present')
+        .map(item => item.keyword);
+      
+      if (presentKeywords.length > 0) {
+        enhancedInstructions += `\n- Highlight these matching skills: ${presentKeywords.slice(0, 5).join(', ')}`;
+      }
+    }
+
+    // Address skill gaps tactfully
+    if (analysisResult.skills_gap_assessment?.missing_skills) {
+      enhancedInstructions += `\n- Address learning potential for: ${analysisResult.skills_gap_assessment.missing_skills.slice(0, 3).join(', ')}`;
+    }
+
+    // Emphasize strong points from impact statement review
+    if (analysisResult.impact_statement_review) {
+      enhancedInstructions += `\n- Emphasize quantified achievements and strong impact statements`;
+    }
+
+    // Address career story flow
+    if (analysisResult.career_story_flow) {
+      enhancedInstructions += `\n- Create a compelling narrative that shows logical career progression`;
+    }
   }
 
   const prompt = `
@@ -310,6 +456,7 @@ export const generateCoverLetter = async (
 
     JOB DESCRIPTION:
     ${jobDescription}
+    ${enhancedInstructions}
 
     Please provide a JSON response with the following structure:
     {
@@ -325,6 +472,10 @@ export const generateCoverLetter = async (
     - Be concise but compelling (3-4 paragraphs)
     - Include proper salutation and closing
     - Use keywords from the job description naturally
+    - Address any skill gaps by showing willingness to learn
+    - Emphasize quantified achievements where possible
+    - Create a compelling narrative that connects past experience to future potential
+    - Be honest and authentic
   `;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {

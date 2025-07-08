@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { processPayment } from '../lib/paystack';
-import { generateTailoredResume, generateCoverLetter } from '../lib/openai';
+import { generateTailoredResume, generateCoverLetter, performComprehensiveAnalysis } from '../lib/openai';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/utils';
 import { CreditCard, CheckCircle, AlertCircle, Star, TrendingUp } from 'lucide-react';
@@ -47,13 +47,24 @@ const Premium: React.FC = () => {
         3500,
         async (reference) => {
           try {
+            // Perform comprehensive analysis with all premium features
+            let comprehensiveAnalysis = analysisResult;
+            if (jobDescription && jobDescription.trim()) {
+              try {
+                comprehensiveAnalysis = await performComprehensiveAnalysis(resumeText, jobDescription);
+              } catch (analysisError) {
+                console.warn('Failed to perform comprehensive analysis, using existing analysis:', analysisError);
+                // Continue with existing analysis if comprehensive analysis fails
+              }
+            }
+
             // Generate tailored resume
-            const tailoredResult = await generateTailoredResume(resumeText, jobDescription || '');
+            const tailoredResult = await generateTailoredResume(resumeText, jobDescription || '', comprehensiveAnalysis);
             
             // Only generate cover letter if job description is available
             let coverLetterResult = null;
             if (jobDescription && jobDescription.trim()) {
-              coverLetterResult = await generateCoverLetter(resumeText, jobDescription);
+              coverLetterResult = await generateCoverLetter(resumeText, jobDescription, comprehensiveAnalysis);
             }
             
             // Save to database with mapped fields (no premium status update)
@@ -140,6 +151,12 @@ const Premium: React.FC = () => {
               <li className="flex items-start space-x-2 sm:space-x-3">
                 <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-sm sm:text-base text-gray-700">
+                  <strong>Premium Analysis:</strong> Comprehensive analysis including ATS compatibility, impact statements, skills gaps, format optimization, and career story flow
+                </span>
+              </li>
+              <li className="flex items-start space-x-2 sm:space-x-3">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <span className="text-sm sm:text-base text-gray-700">
                   <strong>Instant Download:</strong> Download both documents immediately
                 </span>
               </li>
@@ -176,6 +193,38 @@ const Premium: React.FC = () => {
               </p>
             </div>
           )}
+
+          {/* Premium Features Highlight */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-lg p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+              ⭐ Premium Analysis Included
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <span>ATS Compatibility Check</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <span>Impact Statement Review</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <span>Skills Gap Assessment</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <span>Format Optimization</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                <span>Career Story Flow Analysis</span>
+              </li>
+            </ul>
+            <p className="text-xs text-gray-600 mt-3">
+              All premium analysis features are automatically included in your tailored resume generation.
+            </p>
+          </div>
         </div>
 
         {/* Right Column - Payment */}
