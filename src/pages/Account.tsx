@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom';
 
 interface ResumeAnalysis {
   id: string;
+  user_id: string;
   compatibility_score: number;
   keyword_matches: string[];
   experience_gaps: string[];
   tailored_resume?: string;
   cover_letter?: string;
+  analysis_details?: any;
   created_at: string;
 }
 
@@ -55,7 +57,7 @@ const Account: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('resume_analyses')
-        .select('id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, created_at')
+        .select('id, user_id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, analysis_details, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -99,14 +101,39 @@ const Account: React.FC = () => {
   };
 
   const handleViewResume = (analysis: ResumeAnalysis) => {
-    if (analysis.tailored_resume) {
+    if (analysis.tailored_resume && analysis.tailored_resume.trim()) {
+      // Navigate to success page with tailored resume
       navigate('/success', {
         state: {
           tailoredResume: analysis.tailored_resume,
-          improvements: ['Previously generated resume'],
+          improvements: ['Previously generated resume from your history'],
           coverLetter: analysis.cover_letter,
-          coverLetterKeyPoints: ['Previously generated cover letter'],
+          coverLetterKeyPoints: analysis.cover_letter ? ['Previously generated cover letter from your history'] : null,
           reference: `history-${analysis.id}`
+        }
+      });
+    } else if (analysis.analysis_details) {
+      // Navigate to dashboard with analysis details
+      navigate('/dashboard', {
+        state: {
+          initialAnalysisResult: analysis.analysis_details,
+          fromHistory: true
+        }
+      });
+    } else {
+      // Fallback: navigate to dashboard with basic analysis info
+      navigate('/dashboard', {
+        state: {
+          initialAnalysisResult: {
+            match_summary: "This is a historical analysis from your account.",
+            match_score: `${analysis.compatibility_score}/100`,
+            job_keywords_detected: analysis.keyword_matches.map(keyword => ({
+              keyword,
+              status: 'Present' as const
+            })),
+            gaps_and_suggestions: analysis.experience_gaps || []
+          },
+          fromHistory: true
         }
       });
     }
@@ -318,13 +345,19 @@ const Account: React.FC = () => {
               {resumeHistory.map((analysis) => {
                 const daysRemaining = getDaysRemaining(analysis.created_at);
                 const isExpired = daysRemaining === 0;
+                const hasContent = analysis.tailored_resume || analysis.analysis_details;
                 
                 return (
                   <div
                     key={analysis.id}
-                    className={`border rounded-lg p-4 sm:p-6 ${
-                      isExpired ? 'border-red-200 bg-red-50' : 'border-gray-200 hover:border-blue-300'
-                    } transition-colors`}
+                    onClick={() => hasContent && !isExpired && handleViewResume(analysis)}
+                    className={`border rounded-lg p-4 sm:p-6 transition-all duration-200 ${
+                      isExpired 
+                        ? 'border-red-200 bg-red-50' 
+                        : hasContent 
+                          ? 'border-gray-200 hover:border-blue-300 hover:shadow-md cursor-pointer' 
+                          : 'border-gray-200'
+                    }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                       <div className="flex-1">
@@ -340,6 +373,12 @@ const Account: React.FC = () => {
                             <span>{formatDate(analysis.created_at)}</span>
                           </div>
                         </div>
+                        
+                        {hasContent && !isExpired && (
+                          <div className="text-xs text-blue-600 mb-2">
+                            Click to view {analysis.tailored_resume ? 'tailored resume' : 'analysis details'}
+                          </div>
+                        )}
                         
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                           <div>
@@ -366,17 +405,16 @@ const Account: React.FC = () => {
                       </div>
                       
                       <div className="flex space-x-2">
-                        {analysis.tailored_resume && !isExpired ? (
-                          <button
-                            onClick={() => handleViewResume(analysis)}
-                            className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
-                          >
+                        {hasContent && !isExpired ? (
+                          <div className="text-xs sm:text-sm text-blue-600 px-3 py-2 font-medium flex items-center space-x-1">
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>View Resume</span>
-                          </button>
+                            <span>
+                              {analysis.tailored_resume ? 'View Resume' : 'View Analysis'}
+                            </span>
+                          </div>
                         ) : (
                           <div className="text-xs sm:text-sm text-gray-500 px-3 py-2">
-                            {isExpired ? 'Expired' : 'Analysis only'}
+                            {isExpired ? 'Expired' : 'No content'}
                           </div>
                         )}
                       </div>
