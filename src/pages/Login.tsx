@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
-import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -17,8 +18,10 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     register,
@@ -27,6 +30,39 @@ const Login: React.FC = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Handle success messages from navigation state
+  useEffect(() => {
+    if (location.state?.message) {
+      switch (location.state.message) {
+        case 'logged_out':
+          setSuccessMessage('You have been successfully logged out.');
+          break;
+        case 'signup_success':
+          setSuccessMessage('Account created successfully! Please check your email to verify your account and sign in.');
+          break;
+        default:
+          break;
+      }
+      
+      // Clear the message after 5 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+
+      // Clear navigation state to prevent message from showing again
+      navigate(location.pathname, { replace: true, state: {} });
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.state, navigate, location.pathname]);
+
+  // Clear success message when user starts typing
+  const handleInputFocus = () => {
+    if (successMessage) {
+      setSuccessMessage(null);
+    }
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -90,6 +126,17 @@ const Login: React.FC = () => {
 
           <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
             <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
+              {successMessage && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3 sm:p-4">
+                  <div className="flex">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 flex-shrink-0" />
+                    <div className="ml-3">
+                      <p className="text-xs sm:text-sm text-green-800">{successMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
                   <div className="flex">
@@ -109,6 +156,7 @@ const Login: React.FC = () => {
                   <input
                     {...register('email')}
                     type="email"
+                    onFocus={handleInputFocus}
                     autoComplete="email"
                     className="block w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     placeholder="Enter your email"
@@ -126,6 +174,7 @@ const Login: React.FC = () => {
                     <input
                       {...register('password')}
                       type={showPassword ? 'text' : 'password'}
+                      onFocus={handleInputFocus}
                       autoComplete="current-password"
                       className="block w-full px-3 py-2.5 sm:py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 pr-10 text-sm sm:text-base"
                       placeholder="Enter your password"

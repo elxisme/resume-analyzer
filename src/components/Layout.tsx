@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, User, MessageCircle } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,9 +10,18 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+      // Navigate to login with success message
+      navigate('/login', { state: { message: 'logged_out' } });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate to login even if there's an error
+      navigate('/login', { state: { message: 'logged_out' } });
+    }
   };
 
   const handleWhatsAppSupport = () => {

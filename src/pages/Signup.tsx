@@ -42,7 +42,8 @@ const Signup: React.FC = () => {
       if (error) {
         setError(error.message);
       } else {
-        navigate('/dashboard');
+        // Navigate to login with signup success message
+        navigate('/login', { state: { message: 'signup_success' } });
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -96,11 +97,11 @@ const Signup: React.FC = () => {
           <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
             <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-3 sm:p-4">
+                <div className="bg-red-50 border-2 border-red-300 rounded-md p-3 sm:p-4 shadow-sm">
                   <div className="flex">
                     <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
                     <div className="ml-3">
-                      <p className="text-xs sm:text-sm text-red-800">{error}</p>
+                      <p className="text-xs sm:text-sm text-red-800 font-medium">{error}</p>
                     </div>
                   </div>
                 </div>
