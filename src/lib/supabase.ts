@@ -28,5 +28,7 @@ export interface ResumeAnalysis {
   resume_hash?: string;
   job_description_hash?: string;
   analysis_details?: any;
+  original_resume_text?: string;
+  original_job_description?: string;
   created_at: string;
 }

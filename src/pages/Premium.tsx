@@ -76,6 +76,8 @@ const Premium: React.FC = () => {
               skill_gaps: [], // Empty array as new format combines all gaps
               tailored_resume: tailoredResult.tailored_resume,
               cover_letter: coverLetterResult?.cover_letter || null,
+              original_resume_text: resumeText,
+              original_job_description: jobDescription || null,
             });
 
             // Note: Removed the is_premium update - users pay per resume generation

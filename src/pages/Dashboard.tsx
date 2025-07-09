@@ -43,6 +43,8 @@ const Dashboard: React.FC = () => {
         ...initialState,
         currentStep: 4,
         analysisResult: location.state.initialAnalysisResult,
+        resumeText: location.state.originalResumeText || '',
+        jobDescription: location.state.originalJobDescription || '',
         usedCachedResult: true
       };
     }
@@ -282,6 +284,8 @@ const Dashboard: React.FC = () => {
           resume_hash: resumeHash,
           job_description_hash: jobDescriptionHash,
           analysis_details: result,
+          original_resume_text: dashboardState.resumeText,
+          original_job_description: needsJobDescription ? dashboardState.jobDescription : null,
         });
       }
 

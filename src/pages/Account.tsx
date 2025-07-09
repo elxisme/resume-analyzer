@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ResumeAnalysis {
@@ -13,6 +13,8 @@ interface ResumeAnalysis {
   tailored_resume?: string;
   cover_letter?: string;
   analysis_details?: any;
+  original_resume_text?: string;
+  original_job_description?: string;
   created_at: string;
 }
 
@@ -57,7 +59,7 @@ const Account: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('resume_analyses')
-        .select('id, user_id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, analysis_details, created_at')
+        .select('id, user_id, compatibility_score, keyword_matches, experience_gaps, tailored_resume, cover_letter, analysis_details, original_resume_text, original_job_description, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -117,6 +119,8 @@ const Account: React.FC = () => {
       navigate('/dashboard', {
         state: {
           initialAnalysisResult: analysis.analysis_details,
+          originalResumeText: analysis.original_resume_text,
+          originalJobDescription: analysis.original_job_description,
           fromHistory: true
         }
       });
@@ -133,12 +137,34 @@ const Account: React.FC = () => {
             })),
             gaps_and_suggestions: analysis.experience_gaps || []
           },
+          originalResumeText: analysis.original_resume_text,
+          originalJobDescription: analysis.original_job_description,
           fromHistory: true
         }
       });
     }
   };
 
+  const handleUpgradeAnalysis = (analysis: ResumeAnalysis) => {
+    if (analysis.original_resume_text && analysis.original_job_description) {
+      // Navigate to premium page with original texts and analysis
+      navigate('/premium', {
+        state: {
+          resumeText: analysis.original_resume_text,
+          jobDescription: analysis.original_job_description,
+          analysisResult: analysis.analysis_details || {
+            match_summary: "Historical analysis from your account.",
+            match_score: `${analysis.compatibility_score}/100`,
+            job_keywords_detected: analysis.keyword_matches.map(keyword => ({
+              keyword,
+              status: 'Present' as const
+            })),
+            gaps_and_suggestions: analysis.experience_gaps || []
+          }
+        }
+      });
+    }
+  };
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -346,19 +372,25 @@ const Account: React.FC = () => {
                 const daysRemaining = getDaysRemaining(analysis.created_at);
                 const isExpired = daysRemaining === 0;
                 const hasContent = analysis.tailored_resume || analysis.analysis_details;
+                const canUpgrade = analysis.original_resume_text && analysis.original_job_description && !analysis.tailored_resume && !isExpired;
                 
                 return (
                   <div
                     key={analysis.id}
-                    onClick={() => hasContent && !isExpired && handleViewResume(analysis)}
                     className={`border rounded-lg p-4 sm:p-6 transition-all duration-200 ${
                       isExpired 
                         ? 'border-red-200 bg-red-50' 
-                        : hasContent 
-                          ? 'border-gray-200 hover:border-blue-300 hover:shadow-md cursor-pointer' 
-                          : 'border-gray-200'
+                        : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                     }`}
                   >
+                    <div 
+                      onClick={() => hasContent && !isExpired && handleViewResume(analysis)}
+                      className={`${
+                        hasContent && !isExpired 
+                          ? 'cursor-pointer' 
+                          : 'border-gray-200'
+                      }`}
+                    >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
@@ -404,7 +436,7 @@ const Account: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                         {hasContent && !isExpired ? (
                           <div className="text-xs sm:text-sm text-blue-600 px-3 py-2 font-medium flex items-center space-x-1">
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -412,12 +444,24 @@ const Account: React.FC = () => {
                               {analysis.tailored_resume ? 'View Resume' : 'View Analysis'}
                             </span>
                           </div>
+                        ) : canUpgrade ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpgradeAnalysis(analysis);
+                            }}
+                            className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
+                          >
+                            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>Get Resume</span>
+                          </button>
                         ) : (
                           <div className="text-xs sm:text-sm text-gray-500 px-3 py-2">
                             {isExpired ? 'Expired' : 'No content'}
                           </div>
                         )}
                       </div>
+                    </div>
                     </div>
                   </div>
                 );
