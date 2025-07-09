@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { analyzeResume, AnalysisResult } from '../lib/openai';
-import { extractTextFromFile, generateSHA256Hash } from '../lib/utils';
+import { extractTextFromFile, generateSHA256Hash, toSentenceCase } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
 
@@ -30,8 +30,23 @@ const Dashboard: React.FC = () => {
     usedCachedResult: false,
   });
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Load state from sessionStorage
   const loadState = (): DashboardState => {
+    // Check if we have initial analysis result from history
+    if (location.state?.initialAnalysisResult) {
+      const initialState = getInitialState();
+      return {
+        ...initialState,
+        currentStep: 4,
+        analysisResult: location.state.initialAnalysisResult,
+        usedCachedResult: true
+      };
+    }
+    
     try {
       const savedState = sessionStorage.getItem(STORAGE_KEY);
       if (savedState) {
@@ -54,9 +69,14 @@ const Dashboard: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { user } = useAuth();
-  const navigate = useNavigate();
+
+  // Clear location state after loading to prevent re-initialization
+  useEffect(() => {
+    if (location.state?.initialAnalysisResult) {
+      // Clear the state to prevent re-initialization on subsequent visits
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Save state to sessionStorage whenever it changes
   useEffect(() => {
@@ -632,7 +652,7 @@ const Dashboard: React.FC = () => {
         return (
           <div className="space-y-4 sm:space-y-6">
             <div className="text-center">
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Analysis Complete!</h3>
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-900 mb-2">Analysis Complete!</h3>
               <p className="text-sm sm:text-base text-gray-600">Here's your resume analysis results</p>
               {dashboardState.usedCachedResult && (
                 <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
@@ -684,7 +704,7 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-1 gap-2 sm:gap-3">
                       {dashboardState.analysisResult.job_keywords_detected.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100">
-                          <span className="text-sm sm:text-base text-gray-700 font-medium truncate mr-2">{item.keyword}</span>
+                          <span className="text-sm sm:text-base text-gray-700 font-medium truncate mr-2">{toSentenceCase(item.keyword)}</span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
                             item.status === 'Present' 
                               ? 'bg-green-100 text-green-800' 
@@ -842,9 +862,9 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Resume Analysis Dashboard</h1>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Resume Analysis Dashboard</h1>
         <p className="text-sm sm:text-base text-gray-600">Analyze your resume with AI-powered insights</p>
       </div>
 
