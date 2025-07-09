@@ -89,6 +89,12 @@ export const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// Convert text to sentence case (first letter capitalized, rest lowercase)
+export const toSentenceCase = (text: string): string => {
+  if (!text || typeof text !== 'string') return '';
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
 // Generate SHA-256 hash for content deduplication
 export const generateSHA256Hash = async (text: string): Promise<string> => {
   try {
