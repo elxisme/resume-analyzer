@@ -25,11 +25,11 @@ const CoverLetterPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       {/* Header Section */}
       <div className="text-center mb-6 sm:mb-8">
         <Mail className="h-12 w-12 sm:h-16 sm:w-16 text-purple-600 mx-auto mb-3 sm:mb-4" />
-        <h1 className="text-3xl sm:text-4xl font-bold text-purple-600 mb-2">Your Professional Cover Letter</h1>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-600 mb-2">Your Professional Cover Letter</h1>
         <p className="text-sm sm:text-base text-gray-600">Tailored specifically for your job application</p>
         {reference && (
           <p className="text-xs sm:text-sm text-gray-500 mt-2">
