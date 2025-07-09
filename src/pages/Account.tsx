@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp, MoreVertical } from 'lucide-react';
+import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useRef, useEffect } from 'react';
 
 interface ResumeAnalysis {
   id: string;
@@ -26,7 +25,6 @@ const Account: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [resumeHistory, setResumeHistory] = useState<ResumeAnalysis[]>([]);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -36,21 +34,6 @@ const Account: React.FC = () => {
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const navigate = useNavigate();
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpenMenuId(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   useEffect(() => {
     if (userProfile) {
@@ -182,16 +165,6 @@ const Account: React.FC = () => {
       });
     }
   };
-
-  const toggleMenu = (analysisId: string) => {
-    setOpenMenuId(openMenuId === analysisId ? null : analysisId);
-  };
-
-  const handleMenuAction = (action: () => void) => {
-    action();
-    setOpenMenuId(null);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -404,12 +377,20 @@ const Account: React.FC = () => {
                 return (
                   <div
                     key={analysis.id}
-                    className={`border rounded-lg p-4 sm:p-6 transition-all duration-200 relative ${
+                    className={`border rounded-lg p-4 sm:p-6 transition-all duration-200 ${
                       isExpired 
                         ? 'border-red-200 bg-red-50' 
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                     }`}
                   >
+                    <div 
+                      onClick={() => hasContent && !isExpired && handleViewResume(analysis)}
+                      className={`${
+                        hasContent && !isExpired 
+                          ? 'cursor-pointer' 
+                          : 'border-gray-200'
+                      }`}
+                    >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
@@ -424,6 +405,12 @@ const Account: React.FC = () => {
                             <span>{formatDate(analysis.created_at)}</span>
                           </div>
                         </div>
+                        
+                        {hasContent && !isExpired && (
+                          <div className="text-xs text-blue-600 mb-2">
+                            Click to view {analysis.tailored_resume ? 'tailored resume' : 'analysis details'}
+                          </div>
+                        )}
                         
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                           <div>
@@ -449,54 +436,32 @@ const Account: React.FC = () => {
                         </div>
                       </div>
                       
-                      {/* Ellipsis Menu */}
-                      <div className="relative" ref={menuRef}>
-                        {(hasContent && !isExpired) || canUpgrade ? (
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        {hasContent && !isExpired ? (
+                          <div className="text-xs sm:text-sm text-blue-600 px-3 py-2 font-medium flex items-center space-x-1">
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>
+                              {analysis.tailored_resume ? 'View Resume' : 'View Analysis'}
+                            </span>
+                          </div>
+                        ) : canUpgrade ? (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleMenu(analysis.id);
+                              handleUpgradeAnalysis(analysis);
                             }}
-                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                            aria-label="More options"
+                            className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
                           >
-                            <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>Get Resume</span>
                           </button>
-                          
-                          {/* Dropdown Menu */}
-                          {openMenuId === analysis.id && (
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                              <div className="py-1">
-                                {hasContent && !isExpired && (
-                                  <button
-                                    onClick={() => handleMenuAction(() => handleViewResume(analysis))}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                                  >
-                                    <Eye className="h-4 w-4 text-gray-500" />
-                                    <span>
-                                      {analysis.tailored_resume ? 'View Tailored Resume' : 'View Analysis Details'}
-                                    </span>
-                                  </button>
-                                )}
-                                {canUpgrade && (
-                                  <button
-                                    onClick={() => handleMenuAction(() => handleUpgradeAnalysis(analysis))}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                                  >
-                                    <TrendingUp className="h-4 w-4 text-orange-500" />
-                                    <span>Get Tailored Resume</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
                         ) : (
-                          <div className="text-xs sm:text-sm text-gray-400 px-3 py-2 italic">
+                          <div className="text-xs sm:text-sm text-gray-500 px-3 py-2">
                             {isExpired ? 'Expired' : 'No content'}
                           </div>
                         )}
                       </div>
-                      </div>
+                    </div>
                     </div>
                   </div>
                 );
