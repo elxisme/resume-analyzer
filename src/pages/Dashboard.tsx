@@ -616,10 +616,27 @@ const Dashboard: React.FC = () => {
                 id="job-description"
                 value={dashboardState.jobDescription}
                 onChange={(e) => updateState({ jobDescription: e.target.value })}
+                maxLength={6000}
                 rows={10}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                 placeholder="Paste the job description here..."
               />
+              
+              {/* Character count display */}
+              <div className="flex justify-between items-center mt-2">
+                <div className="text-xs text-gray-500">
+                  Paste the complete job description including requirements, responsibilities, and qualifications
+                </div>
+                <div className={`text-xs font-medium ${
+                  dashboardState.jobDescription.length > 5500 
+                    ? 'text-red-600' 
+                    : dashboardState.jobDescription.length > 5000 
+                      ? 'text-orange-600' 
+                      : 'text-gray-500'
+                }`}>
+                  {dashboardState.jobDescription.length}/6000 characters
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
