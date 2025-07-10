@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
+import { User, Mail, MapPin, Camera, Clock, FileText, Eye, Loader2, AlertCircle, CheckCircle, TrendingUp, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ResumeAnalysis {
@@ -19,6 +19,8 @@ interface ResumeAnalysis {
 }
 
 const Account: React.FC = () => {
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'history'>('profile');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,6 +36,20 @@ const Account: React.FC = () => {
   
   const { user, userProfile, refreshUserProfile } = useAuth();
   const navigate = useNavigate();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdownId(null);
+      }
+    };
+
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openDropdownId]);
 
   useEffect(() => {
     if (userProfile) {
@@ -103,6 +119,7 @@ const Account: React.FC = () => {
   };
 
   const handleViewResume = (analysis: ResumeAnalysis) => {
+    setOpenDropdownId(null); // Close dropdown
     if (analysis.tailored_resume && analysis.tailored_resume.trim()) {
       // Navigate to success page with tailored resume
       navigate('/success', {
@@ -146,6 +163,7 @@ const Account: React.FC = () => {
   };
 
   const handleUpgradeAnalysis = (analysis: ResumeAnalysis) => {
+    setOpenDropdownId(null); // Close dropdown
     if (analysis.original_resume_text && analysis.original_job_description) {
       // Navigate to premium page with original texts and analysis
       navigate('/premium', {
@@ -165,6 +183,11 @@ const Account: React.FC = () => {
       });
     }
   };
+
+  const toggleDropdown = (analysisId: string) => {
+    setOpenDropdownId(openDropdownId === analysisId ? null : analysisId);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -383,14 +406,6 @@ const Account: React.FC = () => {
                         : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                     }`}
                   >
-                    <div 
-                      onClick={() => hasContent && !isExpired && handleViewResume(analysis)}
-                      className={`${
-                        hasContent && !isExpired 
-                          ? 'cursor-pointer' 
-                          : 'border-gray-200'
-                      }`}
-                    >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
@@ -405,12 +420,6 @@ const Account: React.FC = () => {
                             <span>{formatDate(analysis.created_at)}</span>
                           </div>
                         </div>
-                        
-                        {hasContent && !isExpired && (
-                          <div className="text-xs text-blue-600 mb-2">
-                            Click to view {analysis.tailored_resume ? 'tailored resume' : 'analysis details'}
-                          </div>
-                        )}
                         
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                           <div>
@@ -436,32 +445,49 @@ const Account: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                        {hasContent && !isExpired ? (
-                          <div className="text-xs sm:text-sm text-blue-600 px-3 py-2 font-medium flex items-center space-x-1">
-                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>
-                              {analysis.tailored_resume ? 'View Resume' : 'View Analysis'}
-                            </span>
-                          </div>
-                        ) : canUpgrade ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpgradeAnalysis(analysis);
-                            }}
-                            className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
-                          >
-                            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>Get Resume</span>
-                          </button>
-                        ) : (
-                          <div className="text-xs sm:text-sm text-gray-500 px-3 py-2">
-                            {isExpired ? 'Expired' : 'No content'}
+                      <div className="relative" ref={openDropdownId === analysis.id ? dropdownRef : null}>
+                        <button
+                          onClick={() => toggleDropdown(analysis.id)}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                          aria-label="More actions"
+                        >
+                          <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                        </button>
+                        
+                        {openDropdownId === analysis.id && (
+                          <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <div className="py-1">
+                              {hasContent && !isExpired ? (
+                                <button
+                                  onClick={() => handleViewResume(analysis)}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                                >
+                                  <Eye className="h-4 w-4 text-blue-600" />
+                                  <span>
+                                    {analysis.tailored_resume ? 'View Tailored Resume' : 'View Analysis Details'}
+                                  </span>
+                                </button>
+                              ) : null}
+                              
+                              {canUpgrade ? (
+                                <button
+                                  onClick={() => handleUpgradeAnalysis(analysis)}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                                >
+                                  <TrendingUp className="h-4 w-4 text-orange-600" />
+                                  <span>Get Tailored Resume</span>
+                                </button>
+                              ) : null}
+                              
+                              {!hasContent && !canUpgrade ? (
+                                <div className="px-4 py-2 text-sm text-gray-500">
+                                  {isExpired ? 'Content expired' : 'No actions available'}
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         )}
                       </div>
-                    </div>
                     </div>
                   </div>
                 );
