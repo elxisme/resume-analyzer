@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation, Navigate, Link } from 'react-router-dom';
-import { downloadTXT, copyToClipboard } from '../lib/utils';
-import { Mail, Download, Copy, Check, ArrowLeft, ArrowRight } from 'lucide-react';
+import { downloadTXT, copyToClipboard, markdownToPlainText } from '../lib/utils';
+import { Mail, Download, Copy, Check, ArrowLeft, ArrowRight, Eye, FileCode } from 'lucide-react';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 const CoverLetterPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
   const location = useLocation();
   const { coverLetter, coverLetterKeyPoints, reference } = location.state || {};
 
@@ -13,11 +15,13 @@ const CoverLetterPage: React.FC = () => {
   }
 
   const handleDownloadTXT = () => {
-    downloadTXT(coverLetter, 'cover-letter.txt');
+    const plainText = markdownToPlainText(coverLetter);
+    downloadTXT(plainText, 'cover-letter.txt');
   };
 
   const handleCopyToClipboard = async () => {
-    const success = await copyToClipboard(coverLetter);
+    const plainText = markdownToPlainText(coverLetter);
+    const success = await copyToClipboard(plainText);
     if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -87,7 +91,7 @@ const CoverLetterPage: React.FC = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={handleCopyToClipboard}
-                    className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
+                    className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
                   >
                     {copied ? (
                       <>
@@ -103,7 +107,7 @@ const CoverLetterPage: React.FC = () => {
                   </button>
                   <button
                     onClick={handleDownloadTXT}
-                    className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
+                    className="bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
                   >
                     <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Download TXT</span>
@@ -112,11 +116,47 @@ const CoverLetterPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-4 sm:p-6">
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* View Mode Toggle */}
+              <div className="flex justify-center">
+                <div className="bg-gray-100 p-1 rounded-lg flex">
+                  <button
+                    onClick={() => setViewMode('rendered')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                      viewMode === 'rendered'
+                        ? 'bg-white text-purple-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>Formatted View</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('raw')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                      viewMode === 'raw'
+                        ? 'bg-white text-purple-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <FileCode className="h-4 w-4" />
+                    <span>Raw Text</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content Display */}
               <div className="bg-gray-50 rounded-lg p-4 sm:p-6 max-h-80 sm:max-h-96 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-800 font-mono leading-relaxed">
-                  {coverLetter}
-                </pre>
+                {viewMode === 'rendered' ? (
+                  <MarkdownRenderer 
+                    content={coverLetter} 
+                    className="text-gray-800"
+                  />
+                ) : (
+                  <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-800 font-mono leading-relaxed">
+                    {coverLetter}
+                  </pre>
+                )}
               </div>
             </div>
           </div>
