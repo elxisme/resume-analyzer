@@ -885,7 +885,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Resume Analysis Dashboard</h1>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Resume Analysis Dashboard</h2>
         <p className="text-sm sm:text-base text-gray-600">Analyze your resume with AI-powered insights</p>
       </div>
 
