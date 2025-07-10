@@ -127,7 +127,7 @@ const Landing: React.FC = () => {
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">AI Analysis</h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Our AI analyzes your resume against the job description for compatibility
+                Zolla analyzes your resume against the job description for compatibility
               </p>
             </div>
             
