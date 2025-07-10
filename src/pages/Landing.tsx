@@ -64,7 +64,7 @@ const Landing: React.FC = () => {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300"> Zolla!</span>
               </h1>
               <p className="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">
-                Use my Free AI Resume Analysis Tool to instantly improve your ATS score so you land more interviews.</p>
+                Use my Free AI Resume Analysis Tool and instantly improve your ATS score to land more interviews.</p>
                 <p className="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">Upload your resume and job description to get a detailed AI-powered review—keyword matching, ATS optimization, action-driven impact tips—all for free.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
