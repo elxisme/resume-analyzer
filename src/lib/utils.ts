@@ -82,6 +82,29 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
   }
 };
 
+// Convert Markdown to plain text for ATS compatibility
+export const markdownToPlainText = (markdown: string): string => {
+  return markdown
+    // Remove markdown headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold and italic formatting
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove code formatting
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove blockquotes
+    .replace(/^>\s+/gm, '')
+    // Convert bullet points to simple dashes
+    .replace(/^[\*\-\+]\s+/gm, '- ')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
