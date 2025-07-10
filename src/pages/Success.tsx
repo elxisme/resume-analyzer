@@ -64,49 +64,49 @@ const Success: React.FC = () => {
             <div className="bg-gray-100 p-1 rounded-lg flex items-center mr-2">
               <button
                 onClick={() => setViewMode('rendered')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
                   viewMode === 'rendered'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <Eye className="h-3 w-3" />
-                <span>Formatted</span>
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Formatted</span>
               </button>
               <button
                 onClick={() => setViewMode('raw')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
                   viewMode === 'raw'
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <FileCode className="h-3 w-3" />
-                <span>Raw</span>
+                <FileCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Raw</span>
               </button>
             </div>
             <button
               onClick={handleCopyToClipboard}
-              className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
+              className="bg-white text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-1.5 text-xs shadow-sm"
             >
               {copied ? (
                 <>
-                  <Check className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                  <span className="text-green-600">Copied!</span>
+                  <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
+                  <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy'}</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>COPY TXT</span>
+                  <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Copy</span>
                 </>
               )}
             </button>
             <button
               onClick={handleDownloadTXT}
-              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-1.5 text-xs shadow-sm"
             >
-              <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>DOWNLOAD</span>
+              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Download</span>
             </button>
           </div>
         </div>
