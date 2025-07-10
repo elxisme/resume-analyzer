@@ -90,7 +90,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-gray-900 text-white py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-[10px] text-gray-400">
-            Zolla Ver. 1.02 by{' '}
+            Zolla Ver. 1.0.2 by{' '}
             <a 
               href="https://elxis.com.ng" 
               target="_blank" 
