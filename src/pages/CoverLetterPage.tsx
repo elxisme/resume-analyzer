@@ -89,6 +89,30 @@ const CoverLetterPage: React.FC = () => {
                   Your Cover Letter
                 </h3>
                 <div className="flex space-x-2">
+                  <div className="bg-gray-100 p-1 rounded-lg flex items-center mr-2">
+                    <button
+                      onClick={() => setViewMode('rendered')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
+                        viewMode === 'rendered'
+                          ? 'bg-white text-purple-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>Formatted</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('raw')}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors flex items-center space-x-1 ${
+                        viewMode === 'raw'
+                          ? 'bg-white text-purple-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <FileCode className="h-3 w-3" />
+                      <span>Raw</span>
+                    </button>
+                  </div>
                   <button
                     onClick={handleCopyToClipboard}
                     className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
@@ -117,34 +141,6 @@ const CoverLetterPage: React.FC = () => {
             </div>
             
             <div className="p-4 sm:p-6 space-y-4">
-              {/* View Mode Toggle */}
-              <div className="flex justify-center">
-                <div className="bg-gray-100 p-1 rounded-lg flex">
-                  <button
-                    onClick={() => setViewMode('rendered')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                      viewMode === 'rendered'
-                        ? 'bg-white text-purple-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span>Formatted View</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('raw')}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                      viewMode === 'raw'
-                        ? 'bg-white text-purple-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <FileCode className="h-4 w-4" />
-                    <span>Raw Text</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Content Display */}
               <div className="bg-gray-50 rounded-lg p-4 sm:p-6 max-h-80 sm:max-h-96 overflow-y-auto">
                 {viewMode === 'rendered' ? (
@@ -164,7 +160,7 @@ const CoverLetterPage: React.FC = () => {
       </div>
 
       {/* Bottom CTA Section */}
-      <div className="mt-6 sm:mt-8 text-center">
+      <div className="mt-6 sm:mt-8 text-center lg:col-start-2 lg:col-span-2">
         <div className="bg-green-600 text-white rounded-lg p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-white mb-2">
             📝 Professional Cover Letter Ready!
