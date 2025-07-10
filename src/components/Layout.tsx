@@ -86,6 +86,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-[10px] text-gray-400">
+            Zolla Ver. 1.02 by{' '}
+            <a 
+              href="https://elxis.com.ng" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              eLxis
+            </a>
+          </p>
+        </div>
+      </footer>
+
       {/* WhatsApp Support Button */}
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
         <button
