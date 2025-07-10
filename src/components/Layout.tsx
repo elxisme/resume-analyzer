@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, MessageCircle } from 'lucide-react';
+import { LogOut, User, MessageCircle, Home } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
@@ -32,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex flex-col">
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
@@ -82,7 +82,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </nav>
       
-      <main className="flex-1">
+      <main className="flex-1 pb-16 sm:pb-0">
         {children}
       </main>
 
@@ -103,8 +103,47 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </footer>
 
+      {/* Mobile Sticky Footer Navigation - Only for logged-in users */}
+      {user && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white shadow-lg border-t border-gray-200 py-2 sm:hidden">
+          <nav className="flex justify-around items-center h-14 max-w-md mx-auto w-full">
+            <Link
+              to="/dashboard"
+              className={`flex flex-col items-center text-xs font-medium px-2 py-1 rounded-md transition-colors ${
+                location.pathname === '/dashboard'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600'
+              }`}
+            >
+              <Home className="h-5 w-5 mb-1" />
+              <span>Dashboard</span>
+            </Link>
+            
+            <Link
+              to="/account"
+              className={`flex flex-col items-center text-xs font-medium px-2 py-1 rounded-md transition-colors ${
+                location.pathname === '/account'
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:text-blue-600'
+              }`}
+            >
+              <User className="h-5 w-5 mb-1" />
+              <span>Account</span>
+            </Link>
+            
+            <button
+              onClick={handleSignOut}
+              className="flex flex-col items-center text-xs font-medium px-2 py-1 rounded-md transition-colors text-gray-700 hover:text-red-600"
+            >
+              <LogOut className="h-5 w-5 mb-1" />
+              <span>Logout</span>
+            </button>
+          </nav>
+        </div>
+      )}
+
       {/* WhatsApp Support Button */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50">
         <button
           onClick={handleWhatsAppSupport}
           className="group bg-green-500 hover:bg-green-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-green-300"
