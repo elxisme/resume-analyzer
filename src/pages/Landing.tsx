@@ -135,9 +135,9 @@ const Landing: React.FC = () => {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                 <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Get Tailored Resume</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Tailored Resume</h3>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Get a professionally tailored resume optimized for the job
+                Optionally, get a professionally tailored resume optimized for the job
               </p>
             </div>
           </div>
