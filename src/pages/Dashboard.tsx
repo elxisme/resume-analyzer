@@ -719,25 +719,36 @@ const Dashboard: React.FC = () => {
                 )}
 
                 {/* Job Keywords Detected - only show if job match analysis was performed */}
-                {isJobMatchSelected && dashboardState.analysisResult.job_keywords_detected && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
-                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Job Keywords Detected</h4>
-                    <div className="grid grid-cols-1 gap-2 sm:gap-3">
-                      {dashboardState.analysisResult.job_keywords_detected.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-gray-100">
-                          <span className="text-sm sm:text-base text-gray-700 font-medium truncate mr-2">{toSentenceCase(item.keyword)}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                            item.status === 'Present' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.status === 'Present' ? '✅ Present' : '❌ Missing'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+{isJobMatchSelected && dashboardState.analysisResult.job_keywords_detected && (
+  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+    <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Job Keywords Detected</h4>
+    <div className="grid grid-cols-1 gap-2 sm:gap-3">
+      {dashboardState.analysisResult.job_keywords_detected.map((item, index) => (
+        <div 
+          key={index} 
+          className={`p-2 sm:p-3 rounded-lg ${
+            item.status === 'Present' 
+              ? 'bg-green-50 border border-green-100' 
+              : 'bg-red-50 border border-red-100'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-sm sm:text-base text-gray-700 font-medium truncate mr-2">
+              {toSentenceCase(item.keyword)}
+            </span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+              item.status === 'Present' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {item.status === 'Present' ? '✅ Present' : '❌ Missing'}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
                 {/* Gaps and Suggestions - only show if job match analysis was performed */}
                 {isJobMatchSelected && dashboardState.analysisResult.gaps_and_suggestions && (
