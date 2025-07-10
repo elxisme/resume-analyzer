@@ -115,6 +115,32 @@ const Premium: React.FC = () => {
         </p>
       </div>
 
+      {/* Analysis Score - Full Width at Top */}
+      {analysisResult && (
+        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
+            Your Current Score
+          </h3>
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+            <div className="flex-1">
+              <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
+                <div 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2.5 sm:h-3 rounded-full"
+                  style={{ width: `${getNumericScore(analysisResult.match_score)}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-900">
+              {analysisResult.match_score}
+            </div>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-600">
+            Zolla AI will optimize your resume and create a compelling cover letter to achieve a higher compatibility score
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Left Column - What You Get */}
         <div className="space-y-4 sm:space-y-6">
@@ -171,31 +197,10 @@ const Premium: React.FC = () => {
             </ul>
           </div>
 
-          {analysisResult && (
-            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
-                Your Current Score
-              </h3>
-              <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
-                <div className="flex-1">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 sm:h-3">
-                    <div 
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 h-2.5 sm:h-3 rounded-full"
-                      style={{ width: `${getNumericScore(analysisResult.match_score)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {analysisResult.match_score}
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Zolla AI will optimize your resume and create a compelling cover letter to achieve a higher compatibility score
-              </p>
-            </div>
-          )}
+        </div>
 
+        {/* Right Column - Payment */}
+        <div className="space-y-4 sm:space-y-6">
           {/* Premium Features Highlight */}
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-lg p-4 sm:p-6">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
@@ -227,10 +232,7 @@ const Premium: React.FC = () => {
               All premium analysis features are automatically included in your tailored resume generation.
             </p>
           </div>
-        </div>
 
-        {/* Right Column - Payment */}
-        <div className="space-y-4 sm:space-y-6">
           <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
               Pricing
