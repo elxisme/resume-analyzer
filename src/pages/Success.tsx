@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation, Navigate, Link } from 'react-router-dom';
-import { downloadTXT, copyToClipboard } from '../lib/utils';
-import { CheckCircle, Download, FileText, ArrowRight, Copy, Check, Mail } from 'lucide-react';
+import { downloadTXT, copyToClipboard, markdownToPlainText } from '../lib/utils';
+import { CheckCircle, Download, FileText, ArrowRight, Copy, Check, Mail, Eye, FileCode } from 'lucide-react';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 const Success: React.FC = () => {
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
   const location = useLocation();
   const { tailoredResume, improvements, coverLetter, coverLetterKeyPoints, reference } = location.state || {};
 
@@ -13,11 +15,13 @@ const Success: React.FC = () => {
   }
 
   const handleDownloadTXT = () => {
-    downloadTXT(tailoredResume, 'tailored-resume.txt');
+    const plainText = markdownToPlainText(tailoredResume);
+    downloadTXT(plainText, 'tailored-resume.txt');
   };
 
   const handleCopyToClipboard = async () => {
-    const success = await copyToClipboard(tailoredResume);
+    const plainText = markdownToPlainText(tailoredResume);
+    const success = await copyToClipboard(plainText);
     if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -59,7 +63,7 @@ const Success: React.FC = () => {
           <div className="flex space-x-2">
             <button
               onClick={handleCopyToClipboard}
-              className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
+              className="bg-white text-gray-700 border border-gray-200 px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
             >
               {copied ? (
                 <>
@@ -75,7 +79,7 @@ const Success: React.FC = () => {
             </button>
             <button
               onClick={handleDownloadTXT}
-              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm"
+              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xs sm:text-sm shadow-sm"
             >
               <Download className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>DOWNLOAD</span>
@@ -83,10 +87,48 @@ const Success: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-gray-50 rounded-lg p-4 sm:p-6 max-h-80 sm:max-h-96 overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-800 font-mono leading-relaxed">
-            {tailoredResume}
-          </pre>
+        <div className="space-y-4">
+          {/* View Mode Toggle */}
+          <div className="flex justify-center">
+            <div className="bg-gray-100 p-1 rounded-lg flex">
+              <button
+                onClick={() => setViewMode('rendered')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  viewMode === 'rendered'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Eye className="h-4 w-4" />
+                <span>Formatted View</span>
+              </button>
+              <button
+                onClick={() => setViewMode('raw')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  viewMode === 'raw'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <FileCode className="h-4 w-4" />
+                <span>Raw Text</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Content Display */}
+          <div className="bg-gray-50 rounded-lg p-4 sm:p-6 max-h-80 sm:max-h-96 overflow-y-auto">
+            {viewMode === 'rendered' ? (
+              <MarkdownRenderer 
+                content={tailoredResume} 
+                className="text-gray-800"
+              />
+            ) : (
+              <pre className="whitespace-pre-wrap text-xs sm:text-sm text-gray-800 font-mono leading-relaxed">
+                {tailoredResume}
+              </pre>
+            )}
+          </div>
         </div>
       </div>
 
@@ -127,7 +169,7 @@ const Success: React.FC = () => {
               tailoredResume,
               improvements
             }}
-            className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+            className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
           >
             <span>View Your Cover Letter</span>
           </Link>
@@ -139,7 +181,7 @@ const Success: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
           <button
             onClick={() => window.location.href = '/dashboard'}
-            className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base"
+            className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm sm:text-base shadow-sm"
           >
             Analyze Another Resume
           </button>
@@ -153,7 +195,7 @@ const Success: React.FC = () => {
                 tailoredResume,
                 improvements
               }}
-              className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+              className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
             >
               <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>View Cover Letter</span>
