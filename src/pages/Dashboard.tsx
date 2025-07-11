@@ -737,8 +737,8 @@ const Dashboard: React.FC = () => {
           </span>
           <span className={`hidden sm:block px-2 py-1 rounded-full text-xs font-medium ${
             item.status === 'Present' 
-              ? 'bg-green-400 text-green-800'  // Darkened from green-100 to green-200
-              : 'bg-red-400 text-red-800'      // Darkened from red-100 to red-200
+              ? 'bg-green-400 text-green-800'  // Darkened from green-100 to green-400
+              : 'bg-red-400 text-red-800'      // Darkened from red-100 to red-400
           }`}>
             {item.status === 'Present' ? '✅ Present' : '❌ Missing'}
           </span>
