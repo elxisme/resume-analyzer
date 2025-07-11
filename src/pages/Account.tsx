@@ -406,8 +406,9 @@ const Account: React.FC = () => {
                         : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                      <div className="flex-1">
+                    <div className="space-y-3">
+                      {/* Mobile: Title and ellipsis on same line */}
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 mb-2">
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded-full"></div>
@@ -419,9 +420,95 @@ const Account: React.FC = () => {
                             <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>{formatDate(analysis.created_at)}</span>
                           </div>
+                          <div className="text-xs sm:text-sm text-gray-500 flex items-center space-x-1">
+                            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span>{formatDate(analysis.created_at)}</span>
+                          </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
+                        {/* Ellipsis button - always visible on mobile */}
+                        <div className="relative" ref={openDropdownId === analysis.id ? dropdownRef : null}>
+                          <button
+                            onClick={() => toggleDropdown(analysis.id)}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                            aria-label="More actions"
+                          >
+                            <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                          </button>
+                          
+                          {openDropdownId === analysis.id && (
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                              <div className="py-1">
+                                {hasContent && !isExpired ? (
+                                  <button
+                                    onClick={() => handleViewResume(analysis)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                                  >
+                                    <Eye className="h-4 w-4 text-blue-600" />
+                                    <span>
+                                      {analysis.tailored_resume ? 'View Tailored Resume' : 'View Analysis Details'}
+                                    </span>
+                                  </button>
+                                ) : null}
+                                
+                                {canUpgrade ? (
+                                  <button
+                                    onClick={() => handleUpgradeAnalysis(analysis)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                                  >
+                                    <TrendingUp className="h-4 w-4 text-orange-600" />
+                                    <span>Get Tailored Resume</span>
+                                  </button>
+                                ) : null}
+                                
+                                {!hasContent && !canUpgrade ? (
+                                  <div className="px-4 py-2 text-sm text-gray-500">
+                                    {isExpired ? 'Content expired' : 'No actions available'}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Stats grid - responsive layout */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
+                        <div>
+                          <span className="text-gray-500">Score:</span>
+                          <span className="ml-1 font-medium text-gray-900">
+                            {analysis.compatibility_score}/100
+                          </span>
+                        </div>
+                        {/* Hide Keywords on mobile, show on sm and up */}
+                        <div className="hidden sm:block">
+                          <span className="text-gray-500">Keywords:</span>
+                          <span className="ml-1 font-medium text-gray-900">
+                            {analysis.keyword_matches.length}
+                          </span>
+                        </div>
+                        <div className="col-span-1 sm:col-span-1">
+                          <span className="text-gray-500">Expires in:</span>
+                          <span className={`ml-1 font-medium ${
+                            isExpired ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-gray-900'
+                          }`}>
+                            {isExpired ? 'Expired' : `${daysRemaining} days`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Account;
                           <div>
                             <span className="text-gray-500">Score:</span>
                             <span className="ml-1 font-medium text-gray-900">
