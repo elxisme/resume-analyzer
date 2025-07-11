@@ -209,7 +209,7 @@ const Account: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Account Settings</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Account Settings</h1>
         <p className="text-sm sm:text-base text-gray-600">Manage your profile and view your resume history</p>
       </div>
 

@@ -33,7 +33,7 @@ const Success: React.FC = () => {
       {/* Header Section */}
       <div className="text-center mb-6 sm:mb-8">
         <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-600 mx-auto mb-3 sm:mb-4" />
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-green-600 mb-2">Payment Successful!</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-2">Payment Successful!</h1>
         <p className="text-sm sm:text-base text-gray-600">Your tailored resume is ready for download</p>
         {reference && (
           <p className="text-xs sm:text-sm text-gray-500 mt-2">

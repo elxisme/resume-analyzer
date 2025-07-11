@@ -109,7 +109,7 @@ const Premium: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">Get Your Tailored Resume & Cover Letter</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">Get Your Tailored Resume & Cover Letter</h1>
         <p className="text-sm sm:text-base text-gray-600">
           Unlock a professionally optimized resume and cover letter tailored to your job description
         </p>
