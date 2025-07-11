@@ -44,7 +44,7 @@ const Premium: React.FC = () => {
     try {
       await processPayment(
         user.email!,
-        1200,
+        2500,
         async (reference) => {
           try {
             // Perform comprehensive analysis with all premium features
@@ -239,7 +239,7 @@ const Premium: React.FC = () => {
             </h3>
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-                {formatCurrency(1200)}
+                {formatCurrency(2500)}
               </div>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Per tailored resume{jobDescription && jobDescription.trim() ? ' & cover letter' : ''} package
@@ -292,7 +292,7 @@ const Premium: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim() ? ' & Cover Letter' : ''} - {formatCurrency(1200)}</span>
+                  <span>Get Enhanced Resume{jobDescription && jobDescription.trim() ? ' & Cover Letter' : ''} - {formatCurrency(2500)}</span>
                 </>
               )}
             </button>
