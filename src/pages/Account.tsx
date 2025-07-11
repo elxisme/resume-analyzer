@@ -390,7 +390,7 @@ const Account: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex overflow-x-auto space-x-4 pb-4 sm:flex-col sm:space-x-0 sm:space-y-4">
               {resumeHistory.map((analysis) => {
                 const daysRemaining = getDaysRemaining(analysis.created_at);
                 const isExpired = daysRemaining === 0;
@@ -400,7 +400,7 @@ const Account: React.FC = () => {
                 return (
                   <div
                     key={analysis.id}
-                    className={`border rounded-lg p-4 sm:p-6 transition-all duration-200 ${
+                    className={`w-80 flex-shrink-0 sm:w-full border rounded-lg p-4 sm:p-6 transition-all duration-200 ${
                       isExpired 
                         ? 'border-red-200 bg-red-50' 
                         : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
