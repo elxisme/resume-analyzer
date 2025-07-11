@@ -728,8 +728,8 @@ const Dashboard: React.FC = () => {
           key={index} 
           className={`p-2 sm:p-3 rounded-lg flex items-center justify-center sm:justify-between ${
             item.status === 'Present' 
-              ? 'bg-green-50 border border-green-100' 
-              : 'bg-red-50 border border-red-100'
+              ? 'bg-green-100 border border-green-200'  // Darkened from green-50 to green-100
+              : 'bg-red-100 border border-red-200'     // Darkened from red-50 to red-100
           }`}
         >
           <span className="text-sm sm:text-base text-gray-700 font-medium text-center sm:text-left">
@@ -737,8 +737,8 @@ const Dashboard: React.FC = () => {
           </span>
           <span className={`hidden sm:block px-2 py-1 rounded-full text-xs font-medium ${
             item.status === 'Present' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
+              ? 'bg-green-200 text-green-800'  // Darkened from green-100 to green-200
+              : 'bg-red-200 text-red-800'      // Darkened from red-100 to red-200
           }`}>
             {item.status === 'Present' ? '✅ Present' : '❌ Missing'}
           </span>
