@@ -506,7 +506,7 @@ export const generateCoverLetter = async (
           content: prompt,
         },
       ],
-      temperature: 0.4,
+      temperature: 0.7,
     }),
   });
 
