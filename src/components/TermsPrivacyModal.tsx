@@ -19,7 +19,7 @@ const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({ isOpen, onClose }
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[70vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
