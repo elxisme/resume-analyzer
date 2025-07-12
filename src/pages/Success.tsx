@@ -148,32 +148,6 @@ const Success: React.FC = () => {
         </div>
       )}
 
-      {/* Cover Letter Ready Section */}
-      {coverLetter && (
-        <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-200">
-          <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center uppercase">
-            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2" />
-            Cover Letter is Ready!
-          </h4>
-          <p className="text-xs sm:text-sm text-gray-600 mb-4">
-            A letterhead is the heading at the top of a sheet of letter paper (stationery). That heading usually
-          </p>
-          <Link
-            to="/cover-letter"
-            state={{ 
-              coverLetter, 
-              coverLetterKeyPoints, 
-              reference,
-              tailoredResume,
-              improvements
-            }}
-            className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
-          >
-            <span>View Your Cover Letter</span>
-          </Link>
-        </div>
-      )}
-
       {/* Bottom CTA Section */}
       <div className="text-center">
         <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
