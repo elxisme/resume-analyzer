@@ -3,6 +3,7 @@ import { useLocation, Navigate, Link } from 'react-router-dom';
 import { downloadTXT, copyToClipboard, markdownToPlainText } from '../lib/utils';
 import { Mail, Download, Copy, Check, ArrowLeft, ArrowRight, Eye, FileCode } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { trackDownload } from '../lib/analytics';
 
 const CoverLetterPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -17,6 +18,7 @@ const CoverLetterPage: React.FC = () => {
   const handleDownloadTXT = () => {
     const plainText = markdownToPlainText(coverLetter);
     downloadTXT(plainText, 'cover-letter.txt');
+    trackDownload('cover_letter');
   };
 
   const handleCopyToClipboard = async () => {

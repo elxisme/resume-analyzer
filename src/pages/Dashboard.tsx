@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { analyzeResume, AnalysisResult } from '../lib/openai';
 import { extractTextFromFile, generateSHA256Hash, toSentenceCase } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { trackResumeAnalysis, trackFileUpload } from '../lib/analytics';
 import { Upload, FileText, Brain, AlertCircle, CheckCircle, ArrowRight, TrendingUp, Loader2, X, Lock, Info } from 'lucide-react';
 
 const STORAGE_KEY = 'zolla_dashboard_state';
@@ -174,6 +175,9 @@ const Dashboard: React.FC = () => {
     try {
       const extractedText = await extractTextFromFile(file);
       updateState({ resumeText: extractedText });
+      
+      // Track file upload
+      trackFileUpload(file.type, file.size);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process file');
       updateState({ fileName: null });
@@ -267,6 +271,10 @@ const Dashboard: React.FC = () => {
         allowedAnalysisTypes.filter(type => type !== 'job_match_analysis') // Remove job_match_analysis as it's always included
       );
       updateState({ analysisResult: result });
+
+      // Track analysis completion
+      const score = getNumericScore(result.match_score);
+      trackResumeAnalysis(allowedAnalysisTypes.join(','), score);
 
       // Save the new analysis with hashes for future deduplication
       if (needsJobDescription) {

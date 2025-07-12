@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, FileText, Brain, CreditCard, MessageCircle, Heart, Info } from 'lucide-react';
 import AnalysisInfoModal from '../components/AnalysisInfoModal';
+import { trackWhatsAppSupport, trackExternalLink } from '../lib/analytics';
 
 const Landing: React.FC = () => {
   const [showAnalysisInfoModal, setShowAnalysisInfoModal] = useState(false);
@@ -10,6 +11,10 @@ const Landing: React.FC = () => {
     const phoneNumber = '2348135381616'; // Replace with your actual WhatsApp number
     const message = encodeURIComponent('Hi! I want to learn more about Zolla AI resume analysis.');
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    
+    // Track WhatsApp support click
+    trackWhatsAppSupport();
+    
     window.open(whatsappUrl, '_blank');
   };
 
@@ -219,6 +224,7 @@ const Landing: React.FC = () => {
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              onClick={() => trackExternalLink('https://elxis.com.ng', 'eLxis')}
             >
               eLxis
             </a>

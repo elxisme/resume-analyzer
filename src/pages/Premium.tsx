@@ -5,6 +5,7 @@ import { processPayment } from '../lib/paystack';
 import { generateTailoredResume, generateCoverLetter, performComprehensiveAnalysis } from '../lib/openai';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/utils';
+import { trackPayment } from '../lib/analytics';
 import { CreditCard, CheckCircle, AlertCircle, Star, TrendingUp } from 'lucide-react';
 
 const Premium: React.FC = () => {
@@ -81,6 +82,9 @@ const Premium: React.FC = () => {
             });
 
             // Note: Removed the is_premium update - users pay per resume generation
+            
+            // Track successful payment
+            trackPayment(2500, 'NGN');
             
             navigate('/success', { 
               state: { 

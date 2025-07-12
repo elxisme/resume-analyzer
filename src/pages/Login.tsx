@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { trackUserLogin } from '../lib/analytics';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -74,6 +75,8 @@ const Login: React.FC = () => {
       if (error) {
         setError(error.message);
       } else {
+        // Track successful login
+        trackUserLogin('email');
         navigate('/dashboard');
       }
     } catch (err) {
@@ -92,6 +95,9 @@ const Login: React.FC = () => {
       if (error) {
         setError(error.message);
       }
+      
+      // Track Google sign in attempt (success will be handled by OAuth redirect)
+      trackUserLogin('google');
       // Note: Navigation will be handled by the OAuth redirect
     } catch (err) {
       setError('An unexpected error occurred with Google sign in');

@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
+import { trackUserRegistration } from '../lib/analytics';
 
 const signupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -43,6 +44,9 @@ const Signup: React.FC = () => {
       if (error) {
         setError(error.message);
       } else {
+        // Track successful registration
+        trackUserRegistration('email');
+        
         // Navigate to login with signup success message
         navigate('/login', { state: { message: 'signup_success' } });
       }
@@ -62,6 +66,9 @@ const Signup: React.FC = () => {
       if (error) {
         setError(error.message);
       }
+      
+      // Track Google sign up attempt (success will be handled by OAuth redirect)
+      trackUserRegistration('google');
       // Note: Navigation will be handled by the OAuth redirect
     } catch (err) {
       setError('An unexpected error occurred with Google sign up');

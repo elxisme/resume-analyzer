@@ -6,6 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zolla - free AI resume analysis tool</title>
     <meta name="description" content="Try our free AI resume analysis tool for instant ATS scoring, keyword insights, and personalized improvement tips—boost your chances of landing interviews!." />
+    
+    <!-- Google tag (gtag.js) -->
+    <script>
+      // Only load Google Analytics if the measurement ID is provided
+      if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${import.meta.env.VITE_GA_MEASUREMENT_ID}`;
+        document.head.appendChild(script);
+        
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID);
+        
+        // Make gtag available globally for tracking custom events
+        window.gtag = gtag;
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

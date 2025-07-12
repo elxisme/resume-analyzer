@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LogOut, User, MessageCircle, Home } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { trackWhatsAppSupport, trackExternalLink } from '../lib/analytics';
 
 interface LayoutProps {
   children: ReactNode;
@@ -28,6 +29,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const phoneNumber = '2348135381616'; // Replace with your actual WhatsApp number
     const message = encodeURIComponent('Hi! I need help with Zolla AI resume analysis.');
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    
+    // Track WhatsApp support click
+    trackWhatsAppSupport();
+    
     window.open(whatsappUrl, '_blank');
   };
 
@@ -96,6 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-300 transition-colors"
+              onClick={() => trackExternalLink('https://elxis.com.ng', 'eLxis')}
             >
               eLxis
             </a>

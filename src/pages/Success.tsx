@@ -3,6 +3,7 @@ import { useLocation, Navigate, Link } from 'react-router-dom';
 import { downloadTXT, copyToClipboard, markdownToPlainText } from '../lib/utils';
 import { CheckCircle, Download, FileText, ArrowRight, Copy, Check, Mail, Eye, FileCode } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { trackDownload } from '../lib/analytics';
 
 const Success: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -17,6 +18,7 @@ const Success: React.FC = () => {
   const handleDownloadTXT = () => {
     const plainText = markdownToPlainText(tailoredResume);
     downloadTXT(plainText, 'tailored-resume.txt');
+    trackDownload('tailored_resume');
   };
 
   const handleCopyToClipboard = async () => {
