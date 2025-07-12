@@ -411,7 +411,7 @@ const Account: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 mb-2">
                           <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded-full"></div>
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded-none"></div>
                             <span className="text-sm sm:text-base font-medium text-gray-900">
                               Resume Analysis
                             </span>
