@@ -86,9 +86,20 @@ const TermsPrivacyModal: React.FC<TermsPrivacyModalProps> = ({ isOpen, onClose }
 
             <section>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">4. Payments</h3>
-              <p>
-                Zolla Resume Assistant offers optional pay-as-you-go features. Payments are securely processed through Paystack. We do not store your payment details.
-              </p>
+              <ul className="space-y-2 ml-4">
+                <li className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold mt-1">•</span>
+                  <span>Zolla Resume Assistant offers optional pay-as-you-go features.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold mt-1">•</span>
+                  <span>Payments are securely processed through Paystack. We do not store your payment details.</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold mt-1">•</span>
+                  <span>Unfortunately, we do not offer any refund for digital services</span>
+                </li>
+              </ul>
             </section>
 
             <section>
