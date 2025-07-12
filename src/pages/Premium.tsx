@@ -7,10 +7,12 @@ import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/utils';
 import { trackPayment } from '../lib/analytics';
 import { CreditCard, CheckCircle, AlertCircle, Star, TrendingUp } from 'lucide-react';
+import TermsPrivacyModal from '../components/TermsPrivacyModal';
 
 const Premium: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const { user, refreshUserProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -302,11 +304,23 @@ const Premium: React.FC = () => {
             </button>
             
             <p className="text-xs text-gray-500 mt-3 sm:mt-4 text-center">
-              By proceeding, you agree to our terms of service and privacy policy
+              By proceeding, you agree to our{' '}
+              <button
+                onClick={() => setShowTermsModal(true)}
+                className="text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                terms of service and privacy policy
+              </button>
             </p>
           </div>
         </div>
       </div>
+
+      {/* Terms & Privacy Modal */}
+      <TermsPrivacyModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
     </div>
   );
 };

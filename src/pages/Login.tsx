@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { trackUserLogin } from '../lib/analytics';
+import TermsPrivacyModal from '../components/TermsPrivacyModal';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -21,6 +22,7 @@ const Login: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -276,10 +278,28 @@ const Login: React.FC = () => {
                   )}
                 </button>
               </div>
+
+              <div className="text-center">
+                <p className="text-xs text-gray-500">
+                  By signing in, you agree to our{' '}
+                  <button
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-blue-600 hover:text-blue-800 underline font-medium"
+                  >
+                    terms of service and privacy policy
+                  </button>
+                </p>
+              </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Terms & Privacy Modal */}
+      <TermsPrivacyModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
     </div>
   );
 };

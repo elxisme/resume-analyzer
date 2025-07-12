@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
 import { trackUserRegistration } from '../lib/analytics';
+import TermsPrivacyModal from '../components/TermsPrivacyModal';
 
 const signupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -24,6 +25,7 @@ const Signup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -252,10 +254,28 @@ const Signup: React.FC = () => {
                   )}
                 </button>
               </div>
+
+              <div className="text-center">
+                <p className="text-xs text-gray-500">
+                  By creating an account, you agree to our{' '}
+                  <button
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-blue-600 hover:text-blue-800 underline font-medium"
+                  >
+                    terms of service and privacy policy
+                  </button>
+                </p>
+              </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Terms & Privacy Modal */}
+      <TermsPrivacyModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
     </div>
   );
 };
