@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { usePageTracking } from './hooks/useAnalytics';
+import ScrollToTop from './components/ScrollToTop';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
@@ -25,6 +26,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <PageTracker />
         <Routes>
           <Route path="/" element={<Landing />} />
