@@ -392,7 +392,7 @@ export const generateTailoredResume = async (
           content: prompt,
         },
       ],
-      temperature: 0.3,
+      temperature: 0.7,
     }),
   });
 
