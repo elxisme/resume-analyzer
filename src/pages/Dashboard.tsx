@@ -235,9 +235,9 @@ const Dashboard: React.FC = () => {
           .eq('resume_hash', resumeHash)
           .eq('job_description_hash', jobDescriptionHash)
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (!queryError && existingAnalysis) {
+        if (!queryError && existingAnalysis !== null) {
           // Use cached result
           const cachedResult: AnalysisResult = existingAnalysis.analysis_details || {
             match_summary: "This analysis was retrieved from your previous submission with the same resume and job description.",
