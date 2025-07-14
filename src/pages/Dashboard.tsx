@@ -137,21 +137,21 @@ const Dashboard: React.FC = () => {
       id: 'skills_gap_assessment',
       label: 'Skills Gap Assessment',
       description: 'Compare your skills to job requirements',
-      isPremium: true,
+      isPremium: false,
       isCore: false
     },
     {
       id: 'format_optimization',
       label: 'Format Optimization',
       description: 'Review resume formatting and structure',
-      isPremium: true,
+      isPremium: false,
       isCore: false
     },
     {
       id: 'career_story_flow',
       label: 'Career Story Flow Analysis',
       description: 'Analyze career progression narrative',
-      isPremium: true,
+      isPremium: false,
       isCore: false
     }
   ];
